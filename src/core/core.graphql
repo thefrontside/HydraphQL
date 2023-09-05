@@ -1,0 +1,43 @@
+directive @field(
+  at: _DirectiveArgument_!
+  default: _DirectiveArgument_
+) on FIELD_DEFINITION
+directive @discriminates(
+  with: _DirectiveArgument_
+  opaqueType: String
+) on INTERFACE
+directive @discriminationAlias(
+  value: String!
+  type: String!
+) repeatable on INTERFACE
+directive @implements(interface: String!) on OBJECT | INTERFACE
+directive @resolve(at: _DirectiveArgument_, from: String) on FIELD_DEFINITION
+
+scalar _DirectiveArgument_
+
+interface Node {
+  id: ID!
+}
+
+interface Connection {
+  pageInfo: PageInfo!
+  edges: [Edge!]!
+  count: Int
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+interface Edge {
+  cursor: String!
+  node: Node!
+}
+
+type Query {
+  node(id: ID!): Node
+  nodes(ids: [ID!]!): [Node]!
+}

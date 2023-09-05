@@ -1,0 +1,99 @@
+{
+  "name": "@frontside/hydraphql",
+  "description": "Tool that DRY and then Hydrate your GraphQL schema",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "dist/cjs/index.cjs",
+  "browser": "dist/esm/index.js",
+  "author": "Frontside Engineering <engineering@frontside.io>",
+  "license": "MIT",
+  "packageManager": "yarn@3.6.3",
+  "homepage": "https://frontside.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thefrontside/HydraphQL"
+  },
+  "keywords": [
+    "graphql"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.cjs",
+      "default": "./dist/esm/index.js"
+    }
+  },
+  "scripts": {
+    "start": "backstage-cli package start",
+    "build": "backstage-cli package build",
+    "lint": "backstage-cli package lint",
+    "test": "node --loader tsx --test ./src/**/*.test.ts",
+    "prepack": "backstage-cli package prepack",
+    "postpack": "backstage-cli package postpack",
+    "generate:types": "graphql-codegen-esm",
+    "clean": "backstage-cli package clean",
+    "prepare": "husky install",
+    "postinstall": "husky install || true"
+  },
+  "dependencies": {
+    "@graphql-tools/code-file-loader": "^8.0.0",
+    "@graphql-tools/graphql-file-loader": "^8.0.0",
+    "@graphql-tools/load": "^8.0.0",
+    "@graphql-tools/load-files": "^7.0.0",
+    "@graphql-tools/merge": "^9.0.0",
+    "@graphql-tools/schema": "^10.0.0",
+    "@graphql-tools/utils": "^10.0.0",
+    "dataloader": "^2.1.0",
+    "graphql": "^16.6.0",
+    "graphql-modules": "^2.2.0",
+    "lodash-es": "^4.17.21",
+    "pascal-case": "^3.1.2",
+    "reflect-metadata": "^0.1.13",
+    "tslib": "^2.6.2"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.26.2",
+    "@envelop/core": "^4.0.0",
+    "@envelop/dataloader": "^5.0.0",
+    "@envelop/graphql-modules": "^5.0.0",
+    "@faker-js/faker": "^7.2.0",
+    "@graphql-codegen/add": "^5.0.0",
+    "@graphql-codegen/cli": "^4.0.0",
+    "@graphql-codegen/graphql-modules-preset": "^4.0.0",
+    "@graphql-codegen/plugin-helpers": "^5.0.0",
+    "@graphql-codegen/schema-ast": "^4.0.0",
+    "@graphql-codegen/typescript": "^4.0.0",
+    "@graphql-codegen/typescript-resolvers": "^4.0.0",
+    "@types/lodash": "^4.14.197",
+    "@types/lodash-es": "^4.17.9",
+    "@types/node": "^18.17.0",
+    "@typescript-eslint/eslint-plugin": "^6.5.0",
+    "@typescript-eslint/parser": "^6.5.0",
+    "eslint": "^8.48.0",
+    "expect": "^29.6.4",
+    "husky": "^8.0.3",
+    "lint-staged": "^14.0.1",
+    "prettier": "^3.0.3",
+    "tsx": "^3.12.7",
+    "typescript": "^5.2.2"
+  },
+  "files": [
+    "src",
+    "dist",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "volta": {
+    "node": "20.5.1",
+    "yarn": "3.6.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs,cts}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    // NOTE: moduleResolution: Bundler doesn't work properly because of this issue https://github.com/microsoft/TypeScript/issues/52363
+    "moduleResolution": "Node10",
+    "strict": true,
+    "module": "NodeNext",
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "baseUrl": ".",
+    "composite": true,
+    "declarationMap": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "allowArbitraryExtensions": true,
+    "allowJs": true,
+    "checkJs": true
+  }
+}
