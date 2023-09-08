@@ -1,5 +1,9 @@
 import { GraphQLInterfaceType, GraphQLObjectType } from "graphql";
-import { DirectiveMapperAPI, NamedType, ResolverContext } from "./types";
+import type {
+  DirectiveMapperAPI,
+  NamedType,
+  ResolverContext,
+} from "./types.js";
 
 export function mapObjectType(
   objectName: string,

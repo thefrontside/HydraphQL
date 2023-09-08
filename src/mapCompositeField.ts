@@ -1,13 +1,13 @@
-import {
+import type {
   GraphQLFieldConfig,
   GraphQLInterfaceType,
   GraphQLObjectType,
 } from "graphql";
-import {
+import type {
   DirectiveMapperAPI,
   FieldDirectiveMapper,
   ResolverContext,
-} from "./types";
+} from "./types.js";
 
 export function mapCompositeFields<
   T extends GraphQLInterfaceType | GraphQLObjectType,

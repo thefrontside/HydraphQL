@@ -1,10 +1,12 @@
 import { loadFiles, loadFilesSync } from "@graphql-tools/load-files";
-import { TypeDefs, createModule } from "graphql-modules";
-import { createDirectiveMapperProvider } from "../mapperProvider";
-import { ResolverContext } from "../types";
-import { fieldDirectiveMapper } from "./fieldDirectiveMapper";
-import { resolveDirectiveMapper } from "./resolveDirectiveMapper";
-import coreSchemaPath from "./coreSchemaPath.cjs";
+import { createModule } from "graphql-modules";
+import type { TypeDefs } from "graphql-modules";
+import { createDirectiveMapperProvider } from "../mapperProvider.js";
+import type { ResolverContext } from "../types.js";
+import { fieldDirectiveMapper } from "./fieldDirectiveMapper.js";
+import { resolveDirectiveMapper } from "./resolveDirectiveMapper.js";
+
+const coreSchemaPath = new URL("./core.graphql", import.meta.url).pathname;
 
 /** @public */
 export const CoreSync = (typeDefs: TypeDefs = loadFilesSync(coreSchemaPath)) =>

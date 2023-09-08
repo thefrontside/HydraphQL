@@ -1,12 +1,13 @@
 import DataLoader from "dataloader";
-import { DocumentNode, printType } from "graphql";
+import { printType } from "graphql";
+import type { DocumentNode } from "graphql";
 import { createModule, gql } from "graphql-modules";
-import { createGraphQLAPI } from "./__testUtils__/createApi";
-import { transformSchema } from "./transformSchema";
-import { NodeId } from "./types";
-import { CoreSync } from "./core/core";
-import { decodeId, encodeId } from "./helpers";
-import { createLoader } from "./createLoader";
+import { createGraphQLAPI } from "./__testUtils__/createApi.js";
+import { transformSchema } from "./transformSchema.js";
+import type { NodeId } from "./types.js";
+import { CoreSync } from "./core/core.js";
+import { decodeId, encodeId } from "./helpers.js";
+import { createLoader } from "./createLoader.js";
 import { describe, test } from "node:test";
 import { expect } from "expect";
 

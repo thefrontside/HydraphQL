@@ -1,9 +1,6 @@
-import {
-  GraphQLInterfaceType,
-  GraphQLUnionType,
-  isInterfaceType,
-} from "graphql";
-import { DirectiveMapperAPI, NamedType } from "./types";
+import { GraphQLUnionType, isInterfaceType } from "graphql";
+import type { GraphQLInterfaceType } from "graphql";
+import type { DirectiveMapperAPI, NamedType } from "./types.js";
 
 export function mapUnionType(
   unionType: GraphQLUnionType,

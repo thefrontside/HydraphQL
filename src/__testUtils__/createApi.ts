@@ -1,12 +1,12 @@
-import { createGraphQLApp } from "../createGraphQLApp";
 import * as graphql from "graphql";
 import DataLoader from "dataloader";
-import { Module } from "graphql-modules";
-import { GraphQLContext } from "../types";
-import { CoreSync } from "../core/core";
+import type { Module } from "graphql-modules";
 import { envelop, useEngine } from "@envelop/core";
 import { useDataLoader } from "@envelop/dataloader";
 import { useGraphQLModules } from "@envelop/graphql-modules";
+import { createGraphQLApp } from "../createGraphQLApp.js";
+import type { GraphQLContext } from "../types.js";
+import { CoreSync } from "../core/core.js";
 
 export async function createGraphQLAPI(
   TestModule: Module,

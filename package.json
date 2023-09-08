@@ -3,8 +3,8 @@
   "description": "Tool that DRY and then Hydrate your GraphQL schema",
   "version": "0.0.0",
   "type": "module",
-  "main": "dist/cjs/index.cjs",
-  "browser": "dist/esm/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "author": "Frontside Engineering <engineering@frontside.io>",
   "license": "MIT",
   "packageManager": "yarn@3.6.3",
@@ -18,19 +18,16 @@
   ],
   "exports": {
     ".": {
-      "require": "./dist/cjs/index.cjs",
-      "default": "./dist/esm/index.js"
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
-    "start": "backstage-cli package start",
-    "build": "backstage-cli package build",
-    "lint": "backstage-cli package lint",
+    "build": "yarn prepack",
+    "lint": "eslint --ext .ts,.tsx,.js,.jsx,.cts,.cjs,.mjs .",
     "test": "node --loader tsx --test ./src/**/*.test.ts",
-    "prepack": "backstage-cli package prepack",
-    "postpack": "backstage-cli package postpack",
+    "prepack": "tsc --build tsconfig.esm.json",
+    "check:types": "tsc --noEmit",
     "generate:types": "graphql-codegen-esm",
-    "clean": "backstage-cli package clean",
     "prepare": "husky install",
     "postinstall": "husky install || true"
   },
@@ -95,5 +92,8 @@
     "*.{json,md}": [
       "prettier --write"
     ]
+  },
+  "resolutions": {
+    "graphql-modules@^2.2.0": "patch:graphql-modules@npm%3A2.2.0#./.yarn/patches/graphql-modules-npm-2.2.0-dd757f391f.patch"
   }
 }

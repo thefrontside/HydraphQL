@@ -1,7 +1,7 @@
 import { get } from "lodash-es";
-import { GraphQLFieldConfig } from "graphql";
-import { ResolverContext } from "../types";
-import { decodeId, encodeId, unboxNamedType } from "../helpers";
+import type { GraphQLFieldConfig } from "graphql";
+import type { ResolverContext } from "../types.js";
+import { decodeId, encodeId, unboxNamedType } from "../helpers.js";
 
 export function resolveDirectiveMapper(
   fieldName: string,

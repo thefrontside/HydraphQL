@@ -1,10 +1,9 @@
 import { generate } from "@graphql-codegen/cli";
-import { default as config } from "../codegen";
-import { Types } from "@graphql-codegen/plugin-helpers";
+import type { Types } from "@graphql-codegen/plugin-helpers";
 import { describe, test } from "node:test";
 import { expect } from "expect";
 import { readFile } from "node:fs/promises";
-import snapshots from "./snapshotFiles.cjs";
+import { default as config } from "../codegen.js";
 
 describe("graphql-common codegen", () => {
   void test("should generate the correct code", async () => {
@@ -13,8 +12,15 @@ describe("graphql-common codegen", () => {
     ).map((file: Types.FileOutput) => file.content);
 
     const [expectedTsFile, expectedGraphqlFile] = await Promise.all([
-      readFile(snapshots.types, "utf-8"),
-      readFile(snapshots.schema, "utf-8"),
+      readFile(
+        new URL("./__snapshots__/types.ts.snap", import.meta.url).pathname,
+        "utf-8",
+      ),
+      readFile(
+        new URL("./__snapshots__/schema.graphql.snap", import.meta.url)
+          .pathname,
+        "utf-8",
+      ),
     ]);
 
     expect(tsFile).toEqual(expectedTsFile);

@@ -1,17 +1,23 @@
 import { get } from "lodash-es";
 import { pascalCase } from "pascal-case";
 import {
-  GraphQLFieldConfigMap,
   GraphQLInterfaceType,
-  GraphQLNamedType,
   GraphQLObjectType,
-  GraphQLTypeResolver,
   isInterfaceType,
   isObjectType,
   isUnionType,
 } from "graphql";
-import { DirectiveMapperAPI, NamedType, ResolverContext } from "./types";
-import { decodeId } from "./helpers";
+import type {
+  GraphQLFieldConfigMap,
+  GraphQLNamedType,
+  GraphQLTypeResolver,
+} from "graphql";
+import type {
+  DirectiveMapperAPI,
+  NamedType,
+  ResolverContext,
+} from "./types.js";
+import { decodeId } from "./helpers.js";
 
 function isRelatedType(
   resolvedType: GraphQLObjectType,
@@ -104,7 +110,7 @@ function validateDiscriminatesDirective(
           `The "with" argument in \`interface ${interfaceName} @discriminates(with: ...)\` must be specified if the interface has multiple implementations`,
         );
       }
-      if (!directive.opaqueType && !generateOpaqueTypes) {
+      if (!opaqueType && !generateOpaqueTypes) {
         throw new Error(
           `The "with" argument in \`interface ${interfaceName} @discriminates(with: ...)\` must be specified if "generateOpaqueTypes" is false and "opaqueType" is not specified`,
         );
@@ -205,8 +211,9 @@ function defineResolver(
 
       const withArg = directive.with;
       const value: unknown =
-        typeof withArg === "string" ||
-        (Array.isArray(withArg) && get(node, withArg));
+        typeof withArg === "string" || Array.isArray(withArg)
+          ? get(node, withArg)
+          : undefined;
       if (value !== undefined) {
         if (typeof value !== "string") {
           throw new Error(

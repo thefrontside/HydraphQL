@@ -1,9 +1,6 @@
-import {
-  GraphQLInterfaceType,
-  GraphQLObjectType,
-  isInterfaceType,
-} from "graphql";
-import { DirectiveMapperAPI, NamedType } from "./types";
+import { isInterfaceType } from "graphql";
+import type { GraphQLInterfaceType, GraphQLObjectType } from "graphql";
+import type { DirectiveMapperAPI, NamedType } from "./types.js";
 
 export function implementsDirectiveMapper(
   type: GraphQLInterfaceType | GraphQLObjectType,

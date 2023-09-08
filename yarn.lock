@@ -4440,7 +4440,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql-modules@npm:^2.2.0":
+"graphql-modules@npm:2.2.0":
   version: 2.2.0
   resolution: "graphql-modules@npm:2.2.0"
   dependencies:
@@ -4451,6 +4451,20 @@ __metadata:
   peerDependencies:
     graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
   checksum: 81e36df3869f54274b1ab2d178d96ae649f6261724235566361caa770a6011b02633e211cdd2e57b4720b8fa61c2469618a1dc7e2ed213855bf48a2fbf30a76d
+  languageName: node
+  linkType: hard
+
+"graphql-modules@patch:graphql-modules@npm%3A2.2.0#./.yarn/patches/graphql-modules-npm-2.2.0-dd757f391f.patch::locator=%40frontside%2Fhydraphql%40workspace%3A.":
+  version: 2.2.0
+  resolution: "graphql-modules@patch:graphql-modules@npm%3A2.2.0#./.yarn/patches/graphql-modules-npm-2.2.0-dd757f391f.patch::version=2.2.0&hash=590d7d&locator=%40frontside%2Fhydraphql%40workspace%3A."
+  dependencies:
+    "@graphql-tools/schema": ^10.0.0
+    "@graphql-tools/wrap": ^10.0.0
+    "@graphql-typed-document-node/core": ^3.1.0
+    ramda: ^0.29.0
+  peerDependencies:
+    graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
+  checksum: dac754ea72ef0aedd5ed276742ca13b7f0a9290f3747fcdc33b01582044a495eab9184feb452a316985a011f68b69a3172b4ea5dd582807f0c1430deee94f63b
   languageName: node
   linkType: hard
 

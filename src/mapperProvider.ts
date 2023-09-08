@@ -1,6 +1,7 @@
 import "reflect-metadata";
-import { Injectable, TypeProvider } from "graphql-modules";
-import { FieldDirectiveMapper } from "./types";
+import { Injectable } from "graphql-modules";
+import type { TypeProvider } from "graphql-modules";
+import type { FieldDirectiveMapper } from "./types.js";
 
 export function toPrivateProp(name: string) {
   return `__${name}_directive_mapper__`;

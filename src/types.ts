@@ -1,11 +1,11 @@
 import { getDirective } from "@graphql-tools/utils";
-import DataLoader from "dataloader";
-import {
+import type DataLoader from "dataloader";
+import type {
   GraphQLFieldConfig,
   GraphQLNamedType,
   GraphQLObjectType,
 } from "graphql";
-import { Application } from "graphql-modules";
+import type { Application } from "graphql-modules";
 
 /** @public */
 export interface NodeQuery {

@@ -1,19 +1,23 @@
 import { getDirective, rewireTypes } from "@graphql-tools/utils";
 import {
   GraphQLInterfaceType,
-  GraphQLNamedType,
   GraphQLObjectType,
   GraphQLSchema,
   isInterfaceType,
   isObjectType,
   isUnionType,
 } from "graphql";
-import { FieldDirectiveMapper, DirectiveMapperAPI, NamedType } from "./types";
-import { mapCompositeFields } from "./mapCompositeField";
-import { mapInterfaceType } from "./mapInterfaceType";
-import { mapUnionType } from "./mapUnionType";
-import { implementsDirectiveMapper } from "./implementsDirectiveMapper";
-import { mapObjectType } from "./mapObjectType";
+import type { GraphQLNamedType } from "graphql";
+import type {
+  FieldDirectiveMapper,
+  DirectiveMapperAPI,
+  NamedType,
+} from "./types.js";
+import { mapCompositeFields } from "./mapCompositeField.js";
+import { mapInterfaceType } from "./mapInterfaceType.js";
+import { mapUnionType } from "./mapUnionType.js";
+import { implementsDirectiveMapper } from "./implementsDirectiveMapper.js";
+import { mapObjectType } from "./mapObjectType.js";
 
 export function getObjectTypeFromTypeMap(
   typeMap: Record<string, GraphQLNamedType>,

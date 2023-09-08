@@ -1,10 +1,11 @@
-import { DocumentNode, Kind } from "graphql";
+import { Kind } from "graphql";
+import type { DocumentNode } from "graphql";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { validateSchema } from "graphql";
-import { Module, Resolvers } from "graphql-modules";
-import { mapDirectives } from "./mapDirectives";
-import { FieldDirectiveMapper } from "./types";
-import { toPrivateProp } from "./mapperProvider";
+import type { Module, Resolvers } from "graphql-modules";
+import { mapDirectives } from "./mapDirectives.js";
+import type { FieldDirectiveMapper } from "./types.js";
+import { toPrivateProp } from "./mapperProvider.js";
 
 /** @public */
 export function transformSchema(

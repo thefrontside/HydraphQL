@@ -1,9 +1,9 @@
-export * from "./createLoader";
-export * from "./createGraphQLApp";
-export * from "./core/core";
-export * from "./helpers";
-export { transformSchema } from "./transformSchema";
-export { createDirectiveMapperProvider } from "./mapperProvider";
+export * from "./createLoader.js";
+export * from "./createGraphQLApp.js";
+export * from "./core/core.js";
+export * from "./helpers.js";
+export { transformSchema } from "./transformSchema.js";
+export { createDirectiveMapperProvider } from "./mapperProvider.js";
 export type {
   GraphQLContext,
   ResolverContext,
@@ -13,4 +13,4 @@ export type {
   OmitFirst,
   NodeQuery,
   NodeId,
-} from "./types";
+} from "./types.js";

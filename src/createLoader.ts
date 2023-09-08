@@ -1,7 +1,8 @@
-import DataLoader, { Options } from "dataloader";
+import DataLoader from "dataloader";
+import type { Options } from "dataloader";
 import { GraphQLError } from "graphql";
-import { BatchLoadFn, NodeQuery, GraphQLContext } from "./types";
-import { decodeId } from "./helpers";
+import type { BatchLoadFn, NodeQuery, GraphQLContext } from "./types.js";
+import { decodeId } from "./helpers.js";
 
 /** @public */
 export const createLoader = <TContext extends Record<string, unknown>>(

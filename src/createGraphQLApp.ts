@@ -1,6 +1,7 @@
-import { createApplication, Module } from "graphql-modules";
-import { transformSchema } from "./transformSchema";
-import { loadSchema } from "./loadSchema";
+import { createApplication } from "graphql-modules";
+import type { Module } from "graphql-modules";
+import { transformSchema } from "./transformSchema.js";
+import { loadSchema } from "./loadSchema.js";
 
 /** @public */
 export interface createGraphQLAppOptions {

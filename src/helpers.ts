@@ -1,10 +1,6 @@
-import {
-  GraphQLNamedType,
-  GraphQLOutputType,
-  isListType,
-  isNonNullType,
-} from "graphql";
-import { NodeId, NodeQuery } from "./types";
+import { isListType, isNonNullType } from "graphql";
+import type { GraphQLNamedType, GraphQLOutputType } from "graphql";
+import type { NodeId, NodeQuery } from "./types.js";
 
 /** @public */
 export function encodeId({ source, typename, query }: NodeId): string {
@@ -33,7 +29,7 @@ export function unboxNamedType(type: GraphQLOutputType): GraphQLNamedType {
 }
 
 function isNodeQuery(obj: unknown): obj is NodeQuery {
-  return !!obj && typeof obj === "object" && "ref" in obj && "args" in obj;
+  return !!obj && typeof obj === "object";
 }
 
 export function id(x: unknown) {
