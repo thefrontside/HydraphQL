@@ -77,7 +77,6 @@
     "typescript": "^5.2.2"
   },
   "files": [
-    "src",
     "dist",
     "LICENSE",
     "README.md",

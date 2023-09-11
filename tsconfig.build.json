@@ -5,5 +5,10 @@
     "outDir": "./dist"
   },
   "include": ["./src"],
-  "exclude": ["codegen.ts", "./**/*.test.ts", "./src/__generated__"]
+  "exclude": [
+    "codegen.ts",
+    "./**/*.test.ts",
+    "./src/__generated__",
+    "./src/__testUtils__"
+  ]
 }
