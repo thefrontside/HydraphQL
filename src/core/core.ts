@@ -5,8 +5,7 @@ import { createDirectiveMapperProvider } from "../mapperProvider.js";
 import type { ResolverContext } from "../types.js";
 import { fieldDirectiveMapper } from "./fieldDirectiveMapper.js";
 import { resolveDirectiveMapper } from "./resolveDirectiveMapper.js";
-
-const coreSchemaPath = new URL("./core.graphql", import.meta.url).pathname;
+import { coreSchemaPath } from "./coreSchemaPath.cjs";
 
 /** @public */
 export const CoreSync = (typeDefs: TypeDefs = loadFilesSync(coreSchemaPath)) =>

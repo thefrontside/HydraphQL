@@ -2,11 +2,12 @@
   "extends": "./tsconfig",
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./dist"
+    "outDir": "./dist/esm"
   },
   "include": ["./src"],
   "exclude": [
     "codegen.ts",
+    "type.ts",
     "./**/*.test.ts",
     "./src/__generated__",
     "./src/__testUtils__"

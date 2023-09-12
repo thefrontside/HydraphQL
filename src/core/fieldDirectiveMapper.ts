@@ -1,4 +1,4 @@
-import { get } from "lodash-es";
+import _ from "lodash";
 import type { GraphQLFieldConfig } from "graphql";
 import type { ResolverContext } from "../types.js";
 import { id } from "../helpers.js";
@@ -34,7 +34,7 @@ export function fieldDirectiveMapper(
     const entity = await loader.load(id);
     if (!entity) return null;
     const source =
-      (get(entity, directive.at as string | string[]) as unknown) ??
+      (_.get(entity, directive.at as string | string[]) as unknown) ??
       directive.default;
     return fieldResolve(source, args, context, info);
   };

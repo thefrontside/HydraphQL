@@ -3,8 +3,8 @@
   "description": "Tool that DRY and then Hydrate your GraphQL schema",
   "version": "0.0.0",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
   "author": "Frontside Engineering <engineering@frontside.io>",
   "license": "MIT",
   "packageManager": "yarn@3.6.3",
@@ -18,14 +18,20 @@
   ],
   "exports": {
     ".": {
-      "default": "./dist/index.js"
-    }
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/esm/index.js"
+    },
+    "./core.graphql": "./src/core/core.graphql"
   },
   "scripts": {
-    "build": "yarn prepack",
+    "build": "yarn build:cjs && yarn build:esm",
+    "build:cjs": "node --loader tsx ./type.ts commonjs && yarn tsc:cjs",
+    "build:esm": "node --loader tsx ./type.ts module && yarn tsc:esm",
+    "tsc:cjs": "tsc --build tsconfig.cjs.json",
+    "tsc:esm": "tsc --build tsconfig.esm.json",
     "lint": "eslint --ext .ts,.tsx,.js,.jsx,.cts,.cjs,.mjs .",
     "test": "node --loader tsx --test ./src/**/*.test.ts",
-    "prepack": "tsc --build tsconfig.build.json",
+    "prepack": "yarn build",
     "clean": "yarn clean:build && yarn clean:graphql",
     "clean:build": "rm -fr ./dist ./tsconfig.build.tsbuildinfo",
     "clean:graphql": "rm -fr ./__generated__ ./src/__generated__",
@@ -45,7 +51,7 @@
     "dataloader": "^2.1.0",
     "graphql": "^16.6.0",
     "graphql-modules": "^2.2.0",
-    "lodash-es": "^4.17.21",
+    "lodash": "^4.17.21",
     "pascal-case": "^3.1.2",
     "reflect-metadata": "^0.1.13",
     "tslib": "^2.6.2"
@@ -64,7 +70,6 @@
     "@graphql-codegen/typescript": "^4.0.0",
     "@graphql-codegen/typescript-resolvers": "^4.0.0",
     "@types/lodash": "^4.14.197",
-    "@types/lodash-es": "^4.17.9",
     "@types/node": "^18.17.0",
     "@typescript-eslint/eslint-plugin": "^6.5.0",
     "@typescript-eslint/parser": "^6.5.0",
@@ -77,6 +82,7 @@
     "typescript": "^5.2.2"
   },
   "files": [
+    "src/core/core.graphql",
     "dist",
     "LICENSE",
     "README.md",

@@ -19,7 +19,6 @@
     "isolatedModules": true,
     "resolveJsonModule": true,
     "allowArbitraryExtensions": true,
-    "verbatimModuleSyntax": true,
     "allowJs": true,
     "checkJs": true
   },

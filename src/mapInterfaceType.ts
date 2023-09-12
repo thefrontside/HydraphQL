@@ -1,4 +1,4 @@
-import { get } from "lodash-es";
+import _ from "lodash";
 import { pascalCase } from "pascal-case";
 import {
   GraphQLInterfaceType,
@@ -212,7 +212,7 @@ function defineResolver(
       const withArg = directive.with;
       const value: unknown =
         typeof withArg === "string" || Array.isArray(withArg)
-          ? get(node, withArg)
+          ? _.get(node, withArg)
           : undefined;
       if (value !== undefined) {
         if (typeof value !== "string") {

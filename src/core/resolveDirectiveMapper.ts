@@ -1,4 +1,4 @@
-import { get } from "lodash-es";
+import _ from "lodash";
 import type { GraphQLFieldConfig } from "graphql";
 import type { ResolverContext } from "../types.js";
 import { decodeId, encodeId, unboxNamedType } from "../helpers.js";
@@ -31,7 +31,7 @@ export function resolveDirectiveMapper(
     const source =
       (directive.from as string | undefined) ?? decodeId(id).source;
     const typename = unboxNamedType(field.type).name;
-    const ref: unknown = get(node, directive.at as string | string[]);
+    const ref: unknown = _.get(node, directive.at as string | string[]);
 
     if (directive.at) {
       if (!ref) {
