@@ -16,7 +16,10 @@ jobs:
         registry-url: https://registry.npmjs.org
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
+    - name: Setup .yarnrc.yml
+      run: |
+        yarn config set npmScopes.my-org.npmAlwaysAuth true
+        yarn config set npmScopes.my-org.npmAuthToken $NPM_AUTH_TOKEN
     - name: Publish Releases
       uses: thefrontside/actions/synchronize-with-npm@dl/add-use-yarn-input
       with:
