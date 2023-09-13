@@ -19,5 +19,7 @@ jobs:
 
     - name: Publish Releases
       uses: thefrontside/actions/synchronize-with-npm@dl/add-use-yarn-input
+      with:
+        USE_YARN: true
       env:
         GITHUB_TOKEN: ${{ secrets.FRONTSIDEJACK_GITHUB_TOKEN }}
