@@ -19,7 +19,7 @@ jobs:
     - name: Setup .yarnrc.yml
       run: |
         yarn config set npmScopes.my-org.npmAlwaysAuth true
-        yarn config set npmScopes.my-org.npmAuthToken $NPM_AUTH_TOKEN
+        yarn config set npmScopes.my-org.npmAuthToken ${{ secrets.NPM_TOKEN }}
     - name: Publish Releases
       uses: thefrontside/actions/synchronize-with-npm@dl/add-use-yarn-input
       with:
