@@ -31,14 +31,14 @@
     "tsc:esm": "tsc --build tsconfig.esm.json",
     "lint": "eslint --ext .ts,.tsx,.js,.jsx,.cts,.cjs,.mjs .",
     "test": "node --loader tsx --test ./src/**/*.test.ts",
-    "prepack": "yarn build",
+    "prepack": "yarn build && pinst --disable",
     "clean": "yarn clean:build && yarn clean:graphql",
     "clean:build": "rm -fr ./dist ./tsconfig.build.tsbuildinfo",
     "clean:graphql": "rm -fr ./__generated__ ./src/__generated__",
     "check:types": "tsc --noEmit",
     "generate:types": "graphql-codegen-esm",
-    "prepare": "husky install",
-    "postinstall": "husky install || true"
+    "postpack": "pinst --enable",
+    "postinstall": "husky install"
   },
   "dependencies": {
     "@graphql-tools/code-file-loader": "^8.0.0",
@@ -75,8 +75,9 @@
     "@typescript-eslint/parser": "^6.5.0",
     "eslint": "^8.48.0",
     "expect": "^29.6.4",
-    "husky": "^8.0.3",
+    "husky": "^8.0.0",
     "lint-staged": "^14.0.1",
+    "pinst": "^3.0.0",
     "prettier": "^3.0.3",
     "tsx": "^3.12.7",
     "typescript": "^5.2.2"
