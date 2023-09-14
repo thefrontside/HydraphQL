@@ -1246,6 +1246,10 @@ __metadata:
     tslib: ^2.6.2
     tsx: ^3.12.7
     typescript: ^5.2.2
+  peerDependencies:
+    dataloader: ^2.0.0
+    graphql: ^16.0.0
+    graphql-modules: ^2.0.0
   languageName: unknown
   linkType: soft
 

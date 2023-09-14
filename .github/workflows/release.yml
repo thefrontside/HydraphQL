@@ -10,20 +10,17 @@ jobs:
     name: Publish Releases
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
     - uses: volta-cli/action@v3
       with:
         registry-url: https://registry.npmjs.org
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-    - name: Setup .yarnrc.yml
-      run: |
-        yarn config set npmAuthToken $NODE_AUTH_TOKEN
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     - name: Publish Releases
-      uses: thefrontside/actions/synchronize-with-npm@dl/add-use-yarn-input
+      uses: thefrontside/actions/synchronize-with-npm@v2
       with:
-        USE_YARN: true
+        INSTALL_SCRIPT: yarn install && yarn pack
       env:
         GITHUB_TOKEN: ${{ secrets.FRONTSIDEJACK_GITHUB_TOKEN }}

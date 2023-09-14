@@ -20,7 +20,7 @@ jobs:
     - name: Publish PR Preview
       uses: thefrontside/actions/publish-pr-preview@v2
       with:
-        INSTALL_SCRIPT: yarn install && yarn prepack
+        INSTALL_SCRIPT: yarn install && yarn pack
       env:
         GITHUB_TOKEN: ${{ secrets.FRONTSIDEJACK_GITHUB_TOKEN }}
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
