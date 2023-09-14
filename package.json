@@ -95,7 +95,7 @@
     "CHANGELOG.md"
   ],
   "volta": {
-    "node": "20.5.1",
+    "node": "20.6.1",
     "yarn": "3.6.3"
   },
   "lint-staged": {
