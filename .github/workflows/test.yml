@@ -1,0 +1,26 @@
+name: Run tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: volta-cli/action@v3
+        with:
+          registry-url: https://registry.npmjs.org
+      - name: Install Dependencies
+        run: yarn
+      - name: Check types
+        run: yarn check:types
+      - name: Lint
+        run: yarn lint
+      - name: Test
+        run: yarn test
