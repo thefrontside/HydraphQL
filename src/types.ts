@@ -5,38 +5,32 @@ import type {
   GraphQLNamedType,
   GraphQLObjectType,
 } from "graphql";
-import type { Application } from "graphql-modules";
+import type { Application, Module } from "graphql-modules";
 
-/** @public */
 export interface NodeQuery {
   ref?: string;
   args?: Record<string, unknown>;
 }
 
-/** @public */
 export interface NodeId {
   source: string;
   typename: string;
   query?: NodeQuery;
 }
 
-/** @public */
 export type BatchLoadFn<Context extends GraphQLContext> = (
   keys: readonly (NodeQuery | undefined)[],
   context: Context,
 ) => PromiseLike<ArrayLike<unknown>>;
 
-/** @public */
 export interface GraphQLContext {
   application: Application;
 }
 
-/** @public */
 export interface ResolverContext extends GraphQLContext {
   loader: DataLoader<string, unknown>;
 }
 
-/** @public */
 export type OmitFirst<T extends unknown[]> = T extends [
   x: unknown,
   ...args: infer R,
@@ -44,7 +38,6 @@ export type OmitFirst<T extends unknown[]> = T extends [
   ? R
   : [];
 
-/** @public */
 export interface DirectiveMapperAPI {
   getImplementingTypes: (interfaceName: string) => GraphQLObjectType[];
   getDirective: (
@@ -53,7 +46,6 @@ export interface DirectiveMapperAPI {
   typeMap: Partial<Record<string, GraphQLNamedType>>;
 }
 
-/** @public */
 export type FieldDirectiveMapper = (
   fieldName: string,
   field: GraphQLFieldConfig<
@@ -68,4 +60,9 @@ export type FieldDirectiveMapper = (
 export interface NamedType {
   implements: string | null;
   discriminates: Set<string>;
+}
+
+export interface GraphQLModule {
+  mappers?: Record<string, FieldDirectiveMapper>;
+  module: Module;
 }
