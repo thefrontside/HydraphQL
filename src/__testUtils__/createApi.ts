@@ -5,11 +5,11 @@ import { envelop, useEngine } from "@envelop/core";
 import { useDataLoader } from "@envelop/dataloader";
 import { useGraphQLModules } from "@envelop/graphql-modules";
 import { createGraphQLApp } from "../createGraphQLApp.js";
-import type { GraphQLContext } from "../types.js";
+import type { GraphQLContext, GraphQLModule } from "../types.js";
 import { CoreSync } from "../core/core.js";
 
 export async function createGraphQLAPI(
-  TestModule: Module,
+  TestModule: GraphQLModule | Module,
   loader: (
     context: Record<string, unknown> & GraphQLContext,
   ) => DataLoader<string, unknown>,

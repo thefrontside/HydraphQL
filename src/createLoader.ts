@@ -4,7 +4,6 @@ import { GraphQLError } from "graphql";
 import type { BatchLoadFn, NodeQuery, GraphQLContext } from "./types.js";
 import { decodeId } from "./helpers.js";
 
-/** @public */
 export const createLoader = <TContext extends Record<string, unknown>>(
   loaders: Record<string, BatchLoadFn<TContext & GraphQLContext>>,
   options?: Options<string, unknown>,

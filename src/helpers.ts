@@ -2,12 +2,10 @@ import { isListType, isNonNullType } from "graphql";
 import type { GraphQLNamedType, GraphQLOutputType } from "graphql";
 import type { NodeId, NodeQuery } from "./types.js";
 
-/** @public */
 export function encodeId({ source, typename, query }: NodeId): string {
   return `${typename}@${source}@${JSON.stringify(query ?? {})}`;
 }
 
-/** @public */
 export function decodeId(id: string): NodeId {
   const [typename, source, ...query] = id.split("@");
   const parsedQuery: unknown = JSON.parse(query.join("@"));
@@ -17,7 +15,6 @@ export function decodeId(id: string): NodeId {
   return { typename, source, query: parsedQuery };
 }
 
-/** @public */
 export function unboxNamedType(type: GraphQLOutputType): GraphQLNamedType {
   if (isNonNullType(type)) {
     return unboxNamedType(type.ofType);
