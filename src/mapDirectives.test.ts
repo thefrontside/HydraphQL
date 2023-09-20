@@ -129,15 +129,13 @@ describe("mapDirectives", () => {
 
   void test("should merge fields for basic types", () => {
     const schema = transform(gql`
-      interface Connection {
+      interface Node {
         foobar: String!
       }
     `);
-    expect(printType(schema.getType("Connection")!).split("\n")).toEqual([
-      "interface Connection {",
-      "  pageInfo: PageInfo!",
-      "  edges: [Edge!]!",
-      "  count: Int",
+    expect(printType(schema.getType("Node")!).split("\n")).toEqual([
+      "interface Node {",
+      "  id: ID!",
       "  foobar: String!",
       "}",
     ]);

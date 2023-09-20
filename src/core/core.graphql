@@ -19,24 +19,6 @@ interface Node {
   id: ID!
 }
 
-interface Connection {
-  pageInfo: PageInfo!
-  edges: [Edge!]!
-  count: Int
-}
-
-type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: String
-  endCursor: String
-}
-
-interface Edge {
-  cursor: String!
-  node: Node!
-}
-
 type Query {
   node(id: ID!): Node
   nodes(ids: [ID!]!): [Node]!

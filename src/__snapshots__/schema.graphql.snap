@@ -8,26 +8,8 @@ directive @implements(interface: String!) on INTERFACE | OBJECT
 
 directive @resolve(at: _DirectiveArgument_, from: String) on FIELD_DEFINITION
 
-interface Connection {
-  count: Int
-  edges: [Edge!]!
-  pageInfo: PageInfo!
-}
-
-interface Edge {
-  cursor: String!
-  node: Node!
-}
-
 interface Node {
   id: ID!
-}
-
-type PageInfo {
-  endCursor: String
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: String
 }
 
 type Query {
