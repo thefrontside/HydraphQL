@@ -269,6 +269,24 @@ describe("mapDirectives", () => {
     ]);
   });
 
+  void test("should resolve Connection type", () => {
+    const schema = transform(gql`
+      interface Entity @implements(interface: "Node") {
+        parents(foo: String, bar: Int): Connection
+          @resolve(at: "metadata.parents", nodeType: "Entity")
+      }
+    `);
+    expect(printType(schema.getType("Entity")!).split("\n")).toEqual([
+      "interface Entity implements Node {",
+      "  id: ID!",
+      "  parents(args: EntityParentsArgs, first: Int, after: String, last: Int, before: String): EntityConnection",
+      "}",
+    ]);
+    expect(printType(schema.getType("EntityParentsArgs")!).split("\n")).toEqual(
+      ["input EntityParentsArgs {", "  foo: String", "  bar: Int", "}"],
+    );
+  });
+
   void test("should fail if `at` argument of @field is not a valid type", () => {
     expect(() =>
       transform(gql`
@@ -732,6 +750,143 @@ describe("mapDirectives", () => {
         name: "hello",
         parent: {
           name: "world",
+        },
+      },
+    });
+  });
+
+  void test("should resolve array of nodes", async () => {
+    const TestModule = createModule({
+      id: "test",
+      typeDefs: gql`
+        type Entity @implements(interface: "Node") {
+          parents: [Entity] @resolve(at: "spec.parents")
+          name: String! @field(at: "metadata.name")
+        }
+      `,
+    });
+    const entity = {
+      kind: "Component",
+      metadata: { name: "hello", namespace: "default" },
+      spec: {
+        parents: [
+          "component:default/world",
+          "component:default/john",
+          "component:default/doe",
+        ],
+      },
+    };
+    const parent = {
+      kind: "Component",
+      metadata: { name: "world", namespace: "default" },
+    };
+    const john = {
+      kind: "Component",
+      metadata: { name: "john", namespace: "default" },
+    };
+    const doe = {
+      kind: "Component",
+      metadata: { name: "doe", namespace: "default" },
+    };
+    const loader = () =>
+      new DataLoader(
+        async (ids) =>
+          await Promise.resolve(
+            ids.map((id) => {
+              const { query: { ref } = {} } = decodeId(id as string);
+              if (ref === "component:default/hello") return entity;
+              if (ref === "component:default/world") return parent;
+              if (ref === "component:default/john") return john;
+              if (ref === "component:default/doe") return doe;
+              return null;
+            }),
+          ),
+      );
+    const query = await createGraphQLAPI(TestModule, loader);
+    const result = await query(/* GraphQL */ `
+      node(id: ${JSON.stringify(
+        encodeId({
+          source: "Mock",
+          typename: "Entity",
+          query: { ref: "component:default/hello" },
+        }),
+      )}) { ...on Entity { name, parents { name } } }
+    `);
+    expect(result).toEqual({
+      node: {
+        name: "hello",
+        parents: [{ name: "world" }, { name: "john" }, { name: "doe" }],
+      },
+    });
+  });
+
+  void test("should resolve connection of nodes", async () => {
+    const TestModule = createModule({
+      id: "test",
+      typeDefs: gql`
+        type Entity @implements(interface: "Node") {
+          parents: Connection @resolve(at: "spec.parents", nodeType: "Entity")
+          name: String! @field(at: "metadata.name")
+        }
+      `,
+    });
+    const entity = {
+      kind: "Component",
+      metadata: { name: "hello", namespace: "default" },
+      spec: {
+        parents: [
+          "component:default/world",
+          "component:default/john",
+          "component:default/doe",
+        ],
+      },
+    };
+    const parent = {
+      kind: "Component",
+      metadata: { name: "world", namespace: "default" },
+    };
+    const john = {
+      kind: "Component",
+      metadata: { name: "john", namespace: "default" },
+    };
+    const doe = {
+      kind: "Component",
+      metadata: { name: "doe", namespace: "default" },
+    };
+    const loader = () =>
+      new DataLoader(
+        async (ids) =>
+          await Promise.resolve(
+            ids.map((id) => {
+              const { query: { ref } = {} } = decodeId(id as string);
+              if (ref === "component:default/hello") return entity;
+              if (ref === "component:default/world") return parent;
+              if (ref === "component:default/john") return john;
+              if (ref === "component:default/doe") return doe;
+              return null;
+            }),
+          ),
+      );
+    const query = await createGraphQLAPI(TestModule, loader);
+    const result = await query(/* GraphQL */ `
+      node(id: ${JSON.stringify(
+        encodeId({
+          source: "Mock",
+          typename: "Entity",
+          query: { ref: "component:default/hello" },
+        }),
+      )}) { ...on Entity { name, parents { count, edges { node { name } } } } }
+    `);
+    expect(result).toEqual({
+      node: {
+        name: "hello",
+        parents: {
+          count: 3,
+          edges: [
+            { node: { name: "world" } },
+            { node: { name: "john" } },
+            { node: { name: "doe" } },
+          ],
         },
       },
     });

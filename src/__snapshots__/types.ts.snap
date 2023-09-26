@@ -176,7 +176,7 @@ export type DiscriminationAliasDirectiveArgs = {
 export type DiscriminationAliasDirectiveResolver<Result, Parent, ContextType = any, Args = DiscriminationAliasDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
 export type FieldDirectiveArgs = {
-  at: Scalars['_DirectiveArgument_']['input'];
+  at?: Maybe<Scalars['_DirectiveArgument_']['input']>;
   default?: Maybe<Scalars['_DirectiveArgument_']['input']>;
 };
 
@@ -191,6 +191,7 @@ export type ImplementsDirectiveResolver<Result, Parent, ContextType = any, Args 
 export type ResolveDirectiveArgs = {
   at?: Maybe<Scalars['_DirectiveArgument_']['input']>;
   from?: Maybe<Scalars['String']['input']>;
+  nodeType?: Maybe<Scalars['String']['input']>;
 };
 
 export type ResolveDirectiveResolver<Result, Parent, ContextType = any, Args = ResolveDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
