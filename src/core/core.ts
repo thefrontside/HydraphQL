@@ -1,21 +1,18 @@
-import { loadFiles, loadFilesSync } from "@graphql-tools/load-files";
+import { loadFilesSync } from "@graphql-tools/load-files";
 import { createModule } from "graphql-modules";
-import type { TypeDefs } from "graphql-modules";
-import type { ResolverContext } from "../types.js";
+import type { GraphQLModule, ResolverContext } from "../types.js";
 import { fieldDirectiveMapper } from "./fieldDirectiveMapper.js";
 import { resolveDirectiveMapper } from "./resolveDirectiveMapper.js";
 import { coreSchemaPath } from "./coreSchemaPath.cjs";
 
-export const CoreSync = (
-  typeDefs: TypeDefs = loadFilesSync(coreSchemaPath),
-) => ({
+export const CoreSync = (): GraphQLModule => ({
   mappers: {
     field: fieldDirectiveMapper,
     resolve: resolveDirectiveMapper,
   },
   module: createModule({
     id: "core",
-    typeDefs,
+    typeDefs: loadFilesSync(coreSchemaPath),
     resolvers: {
       Node: {
         id: async (
@@ -36,5 +33,3 @@ export const CoreSync = (
     },
   }),
 });
-
-export const Core = async () => CoreSync(await loadFiles(coreSchemaPath));

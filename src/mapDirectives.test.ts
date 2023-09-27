@@ -5,7 +5,6 @@ import { createModule, gql } from "graphql-modules";
 import { createGraphQLAPI } from "./__testUtils__/createApi.js";
 import { transformSchema } from "./transformSchema.js";
 import type { NodeId } from "./types.js";
-import { CoreSync } from "./core/core.js";
 import { decodeId, encodeId } from "./helpers.js";
 import { createLoader } from "./createLoader.js";
 import { describe, test } from "node:test";
@@ -15,7 +14,6 @@ describe("mapDirectives", () => {
   const transform = (source: DocumentNode, generateOpaqueTypes?: boolean) =>
     transformSchema(
       [
-        CoreSync(),
         createModule({
           id: "mapDirectives",
           typeDefs: source,

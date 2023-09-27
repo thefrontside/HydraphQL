@@ -5,11 +5,13 @@ import { validateSchema } from "graphql";
 import type { Module, Resolvers } from "graphql-modules";
 import { mapDirectives } from "./mapDirectives.js";
 import type { FieldDirectiveMapper, GraphQLModule } from "./types.js";
+import { CoreSync } from "./index.js";
 
 export function transformSchema(
-  modules: (GraphQLModule | Module)[] = [],
+  additionalModules: (GraphQLModule | Module)[] = [],
   { generateOpaqueTypes }: { generateOpaqueTypes?: boolean } = {},
 ) {
+  const modules = [CoreSync(), ...additionalModules];
   const directiveMappers: Record<string, FieldDirectiveMapper> = {};
   const typeDefs: DocumentNode[] = modules.flatMap((m) => {
     const { module: gqlModule, mappers = {} } = "id" in m ? { module: m } : m;
