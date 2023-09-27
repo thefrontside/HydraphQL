@@ -1236,6 +1236,7 @@ __metadata:
     expect: ^29.6.4
     graphql: ^16.6.0
     graphql-modules: ^2.2.0
+    graphql-relay: ^0.10.0
     husky: ^8.0.0
     lint-staged: ^14.0.1
     lodash: ^4.17.21
@@ -4460,6 +4461,15 @@ __metadata:
   peerDependencies:
     graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
   checksum: dac754ea72ef0aedd5ed276742ca13b7f0a9290f3747fcdc33b01582044a495eab9184feb452a316985a011f68b69a3172b4ea5dd582807f0c1430deee94f63b
+  languageName: node
+  linkType: hard
+
+"graphql-relay@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "graphql-relay@npm:0.10.0"
+  peerDependencies:
+    graphql: ^16.2.0
+  checksum: 74b2b608ed7c18cc405d53fa7e482a68442a4dc7c0748bba029c59e1d23c6c6e5b8193c775eb73f6bb0dce49501f66af0453eb0b0f0362374cef9f97528852c0
   languageName: node
   linkType: hard
 

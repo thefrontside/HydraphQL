@@ -43,7 +43,10 @@ export function mapCompositeFields<
         ResolverContext,
         Record<string, unknown> | undefined
       >;
-      mapper(fieldName, config, directive, api);
+      mapper(fieldName, config, directive, {
+        ...api,
+        typeName: typeConfig.name,
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : error;
       throw new Error(

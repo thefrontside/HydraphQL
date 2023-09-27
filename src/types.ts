@@ -62,7 +62,7 @@ export type FieldDirectiveMapper = (
     Record<string, unknown> | undefined
   >,
   directive: Record<string, unknown>,
-  api: DirectiveMapperAPI,
+  api: DirectiveMapperAPI & { typeName: string },
 ) => void;
 
 export interface NamedType {

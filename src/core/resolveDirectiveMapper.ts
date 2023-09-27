@@ -1,7 +1,22 @@
 import _ from "lodash";
-import type { GraphQLFieldConfig } from "graphql";
-import type { ResolverContext } from "../types.js";
-import { decodeId, encodeId, unboxNamedType } from "../helpers.js";
+import { connectionFromArray, ConnectionArguments } from "graphql-relay";
+import {
+  GraphQLInputObjectType,
+  type GraphQLFieldConfig,
+  type GraphQLInterfaceType,
+  GraphQLInt,
+  GraphQLString,
+} from "graphql";
+import type { DirectiveMapperAPI, ResolverContext } from "../types.js";
+import {
+  createConnectionType,
+  decodeId,
+  encodeId,
+  getNoteTypeForConnection,
+  isConnectionType,
+  isNamedListType,
+  unboxNamedType,
+} from "../helpers.js";
 
 export function resolveDirectiveMapper(
   fieldName: string,
@@ -11,6 +26,7 @@ export function resolveDirectiveMapper(
     Record<string, unknown> | undefined
   >,
   directive: Record<string, unknown>,
+  api: DirectiveMapperAPI & { typeName: string },
 ) {
   if (
     "at" in directive &&
@@ -23,32 +39,123 @@ export function resolveDirectiveMapper(
     );
   }
 
-  field.resolve = async ({ id }, args, { loader }) => {
-    if (directive.at === "id") return { id };
+  if (isConnectionType(field.type)) {
+    if (directive.nodeType && typeof directive.nodeType === "string") {
+      const nodeType = getNoteTypeForConnection(
+        directive.nodeType,
+        (name) => api.typeMap[name],
+        (name, type) => (api.typeMap[name] = type),
+      );
 
-    const node = await loader.load(id);
-
-    const source =
-      (directive.from as string | undefined) ?? decodeId(id).source;
-    const typename = unboxNamedType(field.type).name;
-    const ref: unknown = _.get(node, directive.at as string | string[]);
-
-    if (directive.at) {
-      if (!ref) {
-        return null;
-      } else if (typeof ref !== "string") {
-        throw new Error(
-          `The "at" argument of @resolve directive for "${fieldName}" field must be resolved to a string, but got "${typeof ref}"`,
-        );
-      }
+      if (nodeType) field.type = createConnectionType(nodeType, field.type);
+    } else {
+      field.type = createConnectionType(
+        api.typeMap.Node as GraphQLInterfaceType,
+        field.type,
+      );
     }
 
-    return {
-      id: encodeId({
-        source,
-        typename,
-        query: { ref: ref as string | undefined, args },
-      }),
+    if (field.args && Object.keys(field.args).length > 0) {
+      const argsType = new GraphQLInputObjectType({
+        name: `${api.typeName}${fieldName[0].toUpperCase()}${fieldName.slice(
+          1,
+        )}Args`,
+        fields: { ...field.args },
+      });
+      field.args = { args: { type: argsType } };
+    }
+
+    field.args = {
+      ...field.args,
+      first: { type: GraphQLInt },
+      after: { type: GraphQLString },
+      last: { type: GraphQLInt },
+      before: { type: GraphQLString },
     };
-  };
+
+    field.resolve = async ({ id }, args, { loader }) => {
+      if (directive.at === "id") return { id };
+
+      const node = await loader.load(id);
+
+      const source =
+        (directive.from as string | undefined) ?? decodeId(id).source;
+      const typename = unboxNamedType(field.type).name;
+      const ref: unknown = _.get(node, directive.at as string | string[]);
+
+      if (directive.at) {
+        if (!ref) {
+          return null;
+        } else if (
+          !Array.isArray(ref) ||
+          ref.some((r) => typeof r !== "string")
+        ) {
+          throw new Error(
+            `The "at" argument of @resolve directive for "${fieldName}" field must be resolved to an array of strings`,
+          );
+        }
+      }
+
+      const ids = ((ref ?? []) as string[]).map((r) => ({
+        id: encodeId({
+          source,
+          typename,
+          query: {
+            ref: r as string | undefined,
+            args: (args as { args: Record<string, unknown> }).args,
+          },
+        }),
+      }));
+
+      return {
+        ...connectionFromArray(ids, args as ConnectionArguments),
+        count: ids.length,
+      };
+    };
+  } else {
+    field.resolve = async ({ id }, args, { loader }) => {
+      if (directive.at === "id") return { id };
+
+      const node = await loader.load(id);
+
+      const source =
+        (directive.from as string | undefined) ?? decodeId(id).source;
+      const typename = unboxNamedType(field.type).name;
+      const isListType = isNamedListType(field.type);
+      const ref: unknown = _.get(node, directive.at as string | string[]);
+
+      if (directive.at) {
+        if (!ref) {
+          return null;
+        } else if (
+          isListType &&
+          (!Array.isArray(ref) || ref.some((r) => typeof r !== "string"))
+        ) {
+          throw new Error(
+            `The "at" argument of @resolve directive for "${fieldName}" field must be resolved to an array of strings`,
+          );
+        } else if (!isListType && typeof ref !== "string") {
+          throw new Error(
+            `The "at" argument of @resolve directive for "${fieldName}" field must be resolved to a string, but got "${typeof ref}"`,
+          );
+        }
+      }
+
+      return isListType
+        ? ((ref ?? []) as string[]).map((r) => ({
+            id: encodeId({
+              source,
+              typename,
+              query: { ref: r as string | undefined, args },
+            }),
+          }))
+        : {
+            id: encodeId({
+              source,
+              typename,
+              query: { ref: ref as string | undefined, args },
+            }),
+          };
+    };
+  }
 }

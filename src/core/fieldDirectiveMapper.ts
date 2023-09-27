@@ -4,7 +4,7 @@ import type { ResolverContext } from "../types.js";
 import { id } from "../helpers.js";
 
 export function fieldDirectiveMapper(
-  _fieldName: string,
+  fieldName: string,
   field: GraphQLFieldConfig<
     { id: string },
     ResolverContext,
@@ -34,8 +34,10 @@ export function fieldDirectiveMapper(
     const entity = await loader.load(id);
     if (!entity) return null;
     const source =
-      (_.get(entity, directive.at as string | string[]) as unknown) ??
-      directive.default;
+      (_.get(
+        entity,
+        (directive.at as undefined | string | string[]) ?? fieldName,
+      ) as unknown) ?? directive.default;
     return fieldResolve(source, args, context, info);
   };
 }

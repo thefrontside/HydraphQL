@@ -2,11 +2,11 @@ directive @discriminates(opaqueType: String, with: _DirectiveArgument_) on INTER
 
 directive @discriminationAlias(type: String!, value: String!) repeatable on INTERFACE
 
-directive @field(at: _DirectiveArgument_!, default: _DirectiveArgument_) on FIELD_DEFINITION
+directive @field(at: _DirectiveArgument_, default: _DirectiveArgument_) on FIELD_DEFINITION
 
 directive @implements(interface: String!) on INTERFACE | OBJECT
 
-directive @resolve(at: _DirectiveArgument_, from: String) on FIELD_DEFINITION
+directive @resolve(at: _DirectiveArgument_, from: String, nodeType: String) on FIELD_DEFINITION
 
 interface Connection {
   count: Int
