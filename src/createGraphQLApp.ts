@@ -2,15 +2,14 @@ import { createApplication } from "graphql-modules";
 import type { Module } from "graphql-modules";
 import { transformSchema } from "./transformSchema.js";
 import { loadSchema } from "./loadSchema.js";
+import { GraphQLModule } from "./types.js";
 
-/** @public */
 export interface createGraphQLAppOptions {
   schema?: string | string[];
-  modules?: Module[];
+  modules?: (GraphQLModule | Module)[];
   generateOpaqueTypes?: boolean;
 }
 
-/** @public */
 export async function createGraphQLApp(options: createGraphQLAppOptions) {
   const modules = options.modules ?? [];
   if (options.schema) {
@@ -21,6 +20,6 @@ export async function createGraphQLApp(options: createGraphQLAppOptions) {
   });
   return createApplication({
     schemaBuilder: () => schema,
-    modules,
+    modules: modules.map((m) => ("id" in m ? m : m.module)),
   });
 }

@@ -4,35 +4,32 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { validateSchema } from "graphql";
 import type { Module, Resolvers } from "graphql-modules";
 import { mapDirectives } from "./mapDirectives.js";
-import type { FieldDirectiveMapper } from "./types.js";
-import { toPrivateProp } from "./mapperProvider.js";
+import type { FieldDirectiveMapper, GraphQLModule } from "./types.js";
+import { CoreSync } from "./index.js";
 
-/** @public */
 export function transformSchema(
-  modules: Module[] = [],
+  additionalModules: (GraphQLModule | Module)[] = [],
   { generateOpaqueTypes }: { generateOpaqueTypes?: boolean } = {},
 ) {
+  const modules = [CoreSync(), ...additionalModules];
   const directiveMappers: Record<string, FieldDirectiveMapper> = {};
-  const typeDefs: DocumentNode[] = modules.flatMap((gqlModule) => {
+  const typeDefs: DocumentNode[] = modules.flatMap((m) => {
+    const { module: gqlModule, mappers = {} } = "id" in m ? { module: m } : m;
     const documents = gqlModule.typeDefs;
     documents.forEach((document) => {
       document.definitions.forEach((definition) => {
         if (definition.kind !== Kind.DIRECTIVE_DEFINITION) return;
         const directiveName = definition.name.value;
-        const provider = gqlModule.providers?.find(
-          (p) => toPrivateProp(directiveName) in p,
-        );
-        if (provider)
-          directiveMappers[directiveName] = (
-            provider as unknown as Record<string, FieldDirectiveMapper>
-          )[toPrivateProp(directiveName)];
+        const mapper = mappers?.[directiveName];
+        if (mapper) directiveMappers[directiveName] = mapper;
       });
     });
     return documents;
   });
-  const resolvers: Resolvers = modules.flatMap(
-    ({ config }) => config.resolvers ?? [],
-  );
+  const resolvers: Resolvers = modules.flatMap((m) => {
+    const { config } = "id" in m ? m : m.module;
+    return config.resolvers ?? [];
+  });
 
   const schema = mapDirectives(makeExecutableSchema({ typeDefs, resolvers }), {
     directiveMappers,
