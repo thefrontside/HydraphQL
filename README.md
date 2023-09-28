@@ -4,20 +4,18 @@ HydraphQL provides functionality to organize your Schema by reducing
 repetition and augmenting it with [GraphQL modules][graphql-modules] defining new
 types and how to resolve them.
 
+- [Directives API](#directives-api)
+  - [`@field`](#field)
+  - [`@implements`](#implements)
+  - [`@discriminates`](#discriminates)
+  - [`@discriminationAlias`](#discriminationalias)
+  - [`@resolve`](#resolve)
 - [Getting started](#getting-started)
-  - [Directives API](#directives-api)
-    - [`@field`](#field)
-    - [`@implements`](#implements)
-    - [`@discriminates`](#discriminates)
-    - [`@discriminationAlias`](#discriminationalias)
-    - [`@resolve`](#resolve)
   - [GraphQL Application](#graphql-application)
   - [Extending Schema](#extending-your-schema-with-a-custom-module)
-- [@graphql-codegen/TypeScript](#graphql-codegentypescript)
+  - [@graphql-codegen/TypeScript](#graphql-codegentypescript)
 
-## Getting started
-
-### Directives API
+## Directives API
 
 With GraphQL modules you can structure your graphql code base,
 but you still have to write resolvers using TypeScript code. However,
@@ -29,7 +27,7 @@ which fields map to what. These hints are called `directives`.
 The following directives will tell GraphQL how to write resolvers
 automatically, so that you don't have to.
 
-#### `@field`
+### `@field`
 
 The @field directive allows you to access properties on an object
 using a given path. It allows you to specify a resolver for a field
@@ -64,7 +62,7 @@ type Entity {
 }
 ```
 
-#### `@implements`
+### `@implements`
 
 The `@implements` directive allows you to inherit fields from another
 interface. We created this directive to make it easier to implement
@@ -99,7 +97,7 @@ type Service implements Component & Entity & Node {
 }
 ```
 
-#### `@discriminates`
+### `@discriminates`
 
 The `@discriminates` directive tells the GraphQL App that an interface
 be discriminated by a given value to another interface or a type.
@@ -143,7 +141,7 @@ plugin will generate it for you.
 There is another way to define opaque types for all interfaces by using `generateOpaqueTypes`
 option for GraphQL plugin.
 
-#### `@discriminationAlias`
+### `@discriminationAlias`
 
 By default value from `with` argument is used to find a type as-is or converted to PascalCase.
 And it's fairly enough for most cases. But sometimes you need to match the value with a type
@@ -164,7 +162,7 @@ type OpenAPI @implements(interface: "API") {
 
 This means, when `spec.type` equals to `openapi`, the `API` interface will be resolved to `OpenAPI` type.
 
-#### `@resolve`
+### `@resolve`
 
 The `@resolve` directive is similar to the `@field` directive, but instead of
 resolving a field from the source data, it resolves a field from a 3rd party
@@ -199,6 +197,8 @@ type Project {
 }
 ```
 
+## Getting started
+
 ### GraphQL Application
 
 Since HydraphQL uses GraphQL Modules `createGraphQLApp` returns a GraphQL Application
@@ -207,32 +207,11 @@ which can be used with all popular GraphQL servers like `apollo-server`, `expres
 1. Create an application by using `createGraphQLApp` function
 
 ```ts
-import { createGraphQLApp } from "@frontside/hydraphql";
-import modules from "./modules";
-
-export async function main() {
-  const application = await createGraphQLApp({ modules });
-
-  //...
-}
-```
-
-2. [Use the application with your GraphQL server](https://the-guild.dev/graphql/modules/docs/get-started#use-your-application)
-
-3. Despite of method you use to create a GraphQL server, you must create DataLoader
-   with `createLoader` function and pass it as `loader` option to GraphQL context.
-   For example if you are using `graphql-yoga`:
-
-```ts
 import {
   createGraphQLApp,
   createLoader,
   NodeQuery,
 } from "@frontside/hydraphql";
-import { createYoga } from "graphql-yoga";
-import { createServer } from "node:http";
-import { useDataLoader } from "@envelop/dataloader";
-import { useGraphQLModules } from "@envelop/graphql-modules";
 import modules from "./modules";
 
 export async function main() {
@@ -243,16 +222,11 @@ export async function main() {
     },
   });
 
-  const yoga = createYoga({
-    plugins: [useGraphQLModules(application), useDataLoader("loader", loader)],
-  });
-  const server = createServer(yoga);
-
-  server.listen(4000, () => {
-    console.info("Server is running on http://localhost:4000/graphql");
-  });
+  //...
 }
 ```
+
+2. [Use the application with your GraphQL server](https://the-guild.dev/graphql/modules/docs/get-started#use-your-application)
 
 ### Extending your schema with a custom module
 
