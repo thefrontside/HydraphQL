@@ -22,5 +22,5 @@
     "allowJs": true,
     "checkJs": true
   },
-  "exclude": ["./dist"]
+  "exclude": ["./dist", "./examples"]
 }
