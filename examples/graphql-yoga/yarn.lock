@@ -456,9 +456,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@frontside/hydraphql@file:../../package.tgz::locator=graphql-yoga-example%40workspace%3A.":
+"@frontside/hydraphql@npm:^0.0.1":
   version: 0.0.1
-  resolution: "@frontside/hydraphql@file:../../package.tgz::locator=graphql-yoga-example%40workspace%3A."
+  resolution: "@frontside/hydraphql@npm:0.0.1"
   dependencies:
     "@graphql-tools/code-file-loader": ^8.0.0
     "@graphql-tools/graphql-file-loader": ^8.0.0
@@ -467,15 +467,15 @@ __metadata:
     "@graphql-tools/merge": ^9.0.0
     "@graphql-tools/schema": ^10.0.0
     "@graphql-tools/utils": ^10.0.0
-    graphql-relay: ^0.10.0
     lodash: ^4.17.21
     pascal-case: ^3.1.2
+    reflect-metadata: ^0.1.13
     tslib: ^2.6.2
   peerDependencies:
     dataloader: ^2.0.0
     graphql: ^16.0.0
     graphql-modules: ^2.0.0
-  checksum: 6510d7ecf19c213b854e06677874a214e642e8c9ee39ff00fee5fbd516f3d6f55c44c496a61d638cddaf9101a37982ce8e4b4b8c8cd33d94e01846a3eaf5d140
+  checksum: 5d78be91d3eb4eb6781ae399aa00cc6c4b4892d11ff4973893a491d0d9189d7b4c23b87f3d5e1a3707566300560fd0bf06190348473c922c5105e1cfc9ee06fe
   languageName: node
   linkType: hard
 
@@ -1559,15 +1559,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql-relay@npm:^0.10.0":
-  version: 0.10.0
-  resolution: "graphql-relay@npm:0.10.0"
-  peerDependencies:
-    graphql: ^16.2.0
-  checksum: 74b2b608ed7c18cc405d53fa7e482a68442a4dc7c0748bba029c59e1d23c6c6e5b8193c775eb73f6bb0dce49501f66af0453eb0b0f0362374cef9f97528852c0
-  languageName: node
-  linkType: hard
-
 "graphql-yoga-example@workspace:.":
   version: 0.0.0-use.local
   resolution: "graphql-yoga-example@workspace:."
@@ -1575,7 +1566,7 @@ __metadata:
     "@envelop/core": ^4.0.3
     "@envelop/dataloader": ^5.0.3
     "@envelop/graphql-modules": ^5.0.3
-    "@frontside/hydraphql": ../../package.tgz
+    "@frontside/hydraphql": ^0.0.1
     "@graphql-tools/load-files": ^7.0.0
     dataloader: ^2.2.2
     graphql: ^16.8.1
@@ -2211,6 +2202,13 @@ __metadata:
     string_decoder: ^1.1.1
     util-deprecate: ^1.0.1
   checksum: bdcbe6c22e846b6af075e32cf8f4751c2576238c5043169a1c221c92ee2878458a816a4ea33f4c67623c0b6827c8a400409bfb3cf0bf3381392d0b1dfb52ac8d
+  languageName: node
+  linkType: hard
+
+"reflect-metadata@npm:^0.1.13":
+  version: 0.1.13
+  resolution: "reflect-metadata@npm:0.1.13"
+  checksum: 798d379a7b6f6455501145419505c97dd11cbc23857a386add2b9ef15963ccf15a48d9d15507afe01d4cd74116df8a213247200bac00320bd7c11ddeaa5e8fb4
   languageName: node
   linkType: hard
 
