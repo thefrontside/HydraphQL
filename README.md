@@ -228,6 +228,8 @@ export async function main() {
 
 2. [Use the application with your GraphQL server](https://the-guild.dev/graphql/modules/docs/get-started#use-your-application)
 
+_NOTE_ You can find a simple example of how to use HydraphQL with `graphql-yoga` in [`examples/graphql-yoga`](./examples/graphql-yoga) directory.
+
 ### Extending your schema with a custom module
 
 To extend your schema, you will define it using the GraphQL Schema Definition

@@ -1,0 +1,27 @@
+{
+  "name": "graphql-yoga-example",
+  "type": "module",
+  "private": true,
+  "packageManager": "yarn@3.6.3",
+  "scripts": {
+    "start": "node --loader tsx ./index.ts",
+    "preinstall": "cd ../../ && yarn pack"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "dependencies": {
+    "@envelop/core": "^4.0.3",
+    "@envelop/dataloader": "^5.0.3",
+    "@envelop/graphql-modules": "^5.0.3",
+    "@frontside/hydraphql": "../../package.tgz",
+    "@graphql-tools/load-files": "^7.0.0",
+    "dataloader": "^2.2.2",
+    "graphql": "^16.8.1",
+    "graphql-modules": "^2.2.0",
+    "graphql-yoga": "^4.0.4"
+  },
+  "devDependencies": {
+    "tsx": "^3.13.0"
+  }
+}

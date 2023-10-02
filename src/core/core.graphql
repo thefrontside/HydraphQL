@@ -37,7 +37,9 @@ interface Edge {
   node: Node!
 }
 
-type Query {
+type Query
+
+extend type Query {
   node(id: ID!): Node
   nodes(ids: [ID!]!): [Node]!
 }
