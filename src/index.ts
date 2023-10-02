@@ -12,4 +12,5 @@ export type {
   OmitFirst,
   NodeQuery,
   NodeId,
+  GraphQLModule,
 } from "./types.js";
