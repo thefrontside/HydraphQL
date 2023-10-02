@@ -87,7 +87,7 @@ export function createConnectionType(
   });
 }
 
-export function getNoteTypeForConnection(
+export function getNodeTypeForConnection(
   typeName: string,
   getType: (name: string) => GraphQLNamedType | undefined,
   setType: (name: string, type: GraphQLNamedType) => void,
