@@ -12,7 +12,7 @@ export const createLoader = <TContext extends Record<string, unknown>>(
     async function fetch(ids: readonly string[]) {
       const idsBySources = ids.map(decodeId).reduce(
         (
-          s: Record<string, Map<number, NodeQuery | undefined>>,
+          s: Record<string, Map<number, NodeQuery>>,
           { source, query },
           index,
         ) => ({

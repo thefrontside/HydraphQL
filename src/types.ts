@@ -15,11 +15,11 @@ export interface NodeQuery {
 export interface NodeId {
   source: string;
   typename: string;
-  query?: NodeQuery;
+  query: NodeQuery;
 }
 
 export type BatchLoadFn<Context extends GraphQLContext> = (
-  keys: readonly (NodeQuery | undefined)[],
+  keys: readonly NodeQuery[],
   context: Context,
 ) => PromiseLike<ArrayLike<unknown>>;
 

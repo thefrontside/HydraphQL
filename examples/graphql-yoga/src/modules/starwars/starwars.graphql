@@ -1,0 +1,123 @@
+extend interface Node
+  @discriminates(with: "type")
+  @discriminationAlias(value: "people", type: "Person")
+  @discriminationAlias(value: "films", type: "Film")
+  @discriminationAlias(value: "starships", type: "Starship")
+  @discriminationAlias(value: "vehicles", type: "Vehicle")
+  @discriminationAlias(value: "species", type: "Species")
+  @discriminationAlias(value: "planets", type: "Planet") {
+  type: String @field
+}
+
+type Person @implements(interface: "Node") {
+  name: String @field
+  eyeColor: String @field(at: "eye_color")
+  gender: String @field
+  hairColor: String @field(at: "hair_color")
+  height: String @field
+  homeworld: Planet @resolve(at: "homeworld")
+  mass: String @field
+  skinColor: String @resolve(at: "skin_color")
+  created: String @field
+  edited: String @field
+  films: [Film] @resolve(at: "films")
+  species: [Species] @resolve(at: "species")
+  starships: [Starship] @resolve(at: "starships")
+  vehicles: Connection @resolve(at: "vehicles", nodeType: "Vehicle")
+}
+
+type Film @implements(interface: "Node") {
+  title: String @field
+  director: String @field
+  producer: String @field
+  episodeId: Int @field(at: "episode_id")
+  openingCrawl: String @field(at: "opening_crawl")
+  releaseDate: String @field(at: "release_date")
+  created: String @field
+  edited: String @field
+  planets: [Planet] @resolve(at: "planets")
+  starships: [Starship] @resolve(at: "starships")
+  vehicles: [Vehicle] @resolve(at: "vehicles")
+  species: Connection @resolve(at: "species", nodeType: "Species")
+  characters: Connection @resolve(at: "characters", nodeType: "Person")
+}
+
+type Starship @implements(interface: "Node") {
+  name: String @field
+  model: String @field
+  starshipClass: String @field(at: "starship_class")
+  MGLT: String @field
+  cargoCapacity: String @field(at: "cargo_capacity")
+  consumables: String @field
+  costInCredits: String @field(at: "cost_in_credits")
+  crew: String @field
+  hyperdriveRating: String @field(at: "hyperdrive_rating")
+  length: String @field
+  manufacturer: String @field
+  maxAtmospheringSpeed: String @field(at: "max_atmosphering_speed")
+  passengers: String @field
+  created: String @field
+  edited: String @field
+  films: [Film] @resolve(at: "films")
+  pilots: [Person] @resolve(at: "pilots")
+}
+
+type Vehicle @implements(interface: "Node") {
+  name: String @field
+  model: String @field
+  vehicleClass: String @field(at: "vehicle_class")
+  cargoCapacity: String @field(at: "cargo_capacity")
+  consumables: String @field
+  costInCredits: String @field(at: "cost_in_credits")
+  crew: String @field
+  length: String @field
+  manufacturer: String @field
+  maxAtmospheringSpeed: String @field(at: "max_atmosphering_speed")
+  passengers: String @field
+  created: String @field
+  edited: String @field
+  films: [Film] @resolve(at: "films")
+  pilots: [Person] @resolve(at: "pilots")
+}
+
+type Species @implements(interface: "Node") {
+  name: String @field
+  classification: String @field
+  designation: String @field
+  language: String @field
+  averageHeight: String @field(at: "average_height")
+  averageLifespan: String @field(at: "average_lifespan")
+  eyeColors: String @field(at: "eye_colors")
+  hairColors: String @field(at: "hair_colors")
+  skinColors: String @field(at: "skin_colors")
+  homeworld: Planet @resolve(at: "homeworld")
+  created: String @field
+  edited: String @field
+  films: [Film] @resolve(at: "films")
+  people: Connection @resolve(at: "people", nodeType: "Person")
+}
+
+type Planet @implements(interface: "Node") {
+  name: String @field
+  diameter: String @field
+  rotationPeriod: String @field(at: "rotation_period")
+  orbitalPeriod: String @field(at: "orbital_period")
+  gravity: String @field
+  population: String @field
+  climate: String @field
+  terrain: String @field
+  surfaceWater: String @field(at: "surface_water")
+  created: String @field
+  edited: String @field
+  films: [Film] @resolve(at: "films")
+  residents: Connection @resolve(at: "residents", nodeType: "Person")
+}
+
+extend type Query {
+  people(search: String): [Person]
+  films(search: String): [Film]
+  starships(search: String): [Starship]
+  vehicles(search: String): [Vehicle]
+  species(search: String): [Species]
+  planets(search: String): [Planet]
+}
