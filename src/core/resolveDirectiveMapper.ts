@@ -12,7 +12,7 @@ import {
   createConnectionType,
   decodeId,
   encodeId,
-  getNoteTypeForConnection,
+  getNodeTypeForConnection,
   isConnectionType,
   isNamedListType,
   unboxNamedType,
@@ -41,7 +41,7 @@ export function resolveDirectiveMapper(
 
   if (isConnectionType(field.type)) {
     if (directive.nodeType && typeof directive.nodeType === "string") {
-      const nodeType = getNoteTypeForConnection(
+      const nodeType = getNodeTypeForConnection(
         directive.nodeType,
         (name) => api.typeMap[name],
         (name, type) => (api.typeMap[name] = type),
