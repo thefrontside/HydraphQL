@@ -1,5 +1,12 @@
 # @frontside/hydraphql
 
+## 0.1.1
+
+### Patch Changes
+
+- 55a4143: Re-export GraphQLModule interface
+- 46a5020: Fix helper name typos
+
 ## 0.1.0
 
 ### Minor Changes
