@@ -1,6 +1,7 @@
 import { loadFilesSync } from "@graphql-tools/load-files";
 import { createModule } from "graphql-modules";
 import { encodeId } from "@frontside/hydraphql";
+import { Resolvers } from "../../__generated__/graphql";
 
 const STARWARS_API = "https://swapi.dev/api";
 
@@ -12,10 +13,7 @@ export const StarWars = createModule({
   ),
   resolvers: {
     Query: {
-      people: async (
-        _: unknown,
-        { search }: { search: string },
-      ): Promise<{ id: string }[]> => {
+      people: async (_: unknown, { search }): Promise<{ id: string }[]> => {
         const response = await fetch(
           `${STARWARS_API}/people/?search=${search}`,
         );
@@ -30,10 +28,7 @@ export const StarWars = createModule({
           }),
         }));
       },
-      films: async (
-        _: unknown,
-        { search }: { search: string },
-      ): Promise<{ id: string }[]> => {
+      films: async (_: unknown, { search }): Promise<{ id: string }[]> => {
         const response = await fetch(`${STARWARS_API}/films/?search=${search}`);
         const films = (
           (await response.json()) as { results: { url: string }[] }
@@ -46,10 +41,7 @@ export const StarWars = createModule({
           }),
         }));
       },
-      starships: async (
-        _: unknown,
-        { search }: { search: string },
-      ): Promise<{ id: string }[]> => {
+      starships: async (_: unknown, { search }): Promise<{ id: string }[]> => {
         const response = await fetch(
           `${STARWARS_API}/starships/?search=${search}`,
         );
@@ -64,10 +56,7 @@ export const StarWars = createModule({
           }),
         }));
       },
-      vehicles: async (
-        _: unknown,
-        { search }: { search: string },
-      ): Promise<{ id: string }[]> => {
+      vehicles: async (_: unknown, { search }): Promise<{ id: string }[]> => {
         const response = await fetch(
           `${STARWARS_API}/vehicles/?search=${search}`,
         );
@@ -82,10 +71,7 @@ export const StarWars = createModule({
           }),
         }));
       },
-      species: async (
-        _: unknown,
-        { search }: { search: string },
-      ): Promise<{ id: string }[]> => {
+      species: async (_: unknown, { search }): Promise<{ id: string }[]> => {
         const response = await fetch(
           `${STARWARS_API}/species/?search=${search}`,
         );
@@ -100,10 +86,7 @@ export const StarWars = createModule({
           }),
         }));
       },
-      planets: async (
-        _: unknown,
-        { search }: { search: string },
-      ): Promise<{ id: string }[]> => {
+      planets: async (_: unknown, { search }): Promise<{ id: string }[]> => {
         const response = await fetch(
           `${STARWARS_API}/planets/?search=${search}`,
         );
@@ -119,5 +102,5 @@ export const StarWars = createModule({
         }));
       },
     },
-  },
+  } as Resolvers,
 });
