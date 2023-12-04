@@ -1,0 +1,38 @@
+TODO: Add link to type resolving
+TODO: Mention `__resolve` field and link to `@discriminates`
+TODO: Optional `from` argument
+TODO: Link to collections
+TODO: How to add loader to application
+
+The `@resolve` directive is similar to the `@field` directive, but instead of
+resolving a field from the source data, it resolves a field from a 3rd party
+API. This is useful when you want to add fields to your schema that are not
+available in the source data, but are available from another API.
+
+1. To achieve that first of all you need to create a DataLoader with `createLoader` function
+
+```ts
+import querystring from "querystring";
+import { createLoader, NodeQuery } from "@frontside/hydraphql";
+
+export const loader = createLoader({
+  async ExampleCom(queries: NodeQuery[]) {
+    return Promise.all(
+      queries.map(async ({ ref, args }) => {
+        const response = await fetch(
+          `https://example.com/api/${ref}?${querystring.stringify(args)}`,
+        );
+        return response.json();
+      }),
+    );
+  },
+});
+```
+
+2. Then you can use the `@resolve` directive with specifying the loader name of your API:
+
+```graphql
+type Project {
+  tasks: [Task!] @resolve(at: "spec.projectId", from: "ExampleCom")
+}
+```

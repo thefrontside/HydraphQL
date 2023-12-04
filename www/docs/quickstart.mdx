@@ -1,0 +1,117 @@
+To start using it you will need to install some packages:
+
+```bash
+yarn add dataloader graphql graphql-modules
+```
+
+And then you can install HydraphQL itself:
+
+```bash
+yarn add @frontside/hydraphql
+```
+
+## Usage
+
+So after you've installed packages you can create your first GraphQL application.
+HydraphQL uses [graphql-modules] under the hood and returns an instance of
+[`Application`](https://the-guild.dev/graphql/modules/docs/api#application). You also
+can checkout how to use it with your GraphQL server in the [server].
+
+```typescript
+import { createGraphQLApp } from '@frontside/hydraphql';
+
+export async function main() {
+  const application = await createGraphQLApp();
+
+  const schema = application.schema;
+  const execute = application.createExecution();
+  const subscribe = application.createSubscription();
+}
+```
+
+An empty application isn't very useful, so let's add a simple module to it.
+You can create directory `src/modules/my-module` and add two files (a GraphQL schema
+and a module itself):
+
+```graphql
+# src/modules/my-module/my-module.graphql
+type Asset {
+  id: ID!
+  symbol: String!
+  name: String!
+  supply: String!
+  marketCapUsd: String!
+  volumeUsd24Hr: String!
+  priceUsd: String!
+  changePercent24Hr: String!
+}
+
+extend type Query {
+  asset(id: String!): Asset!
+}
+```
+
+```typescript
+// src/modules/my-module/my-module.ts
+import { createModule } from 'graphql-modules';
+import { loadFilesSync } from '@graphql-tools/load-files';
+
+export const MyModule = createModule({
+  id: 'my-module',
+  dirname: __dirname,
+  typeDefs: loadFilesSync(require.resolve('./my-module.graphql')),
+  resolvers: {
+    Query: {
+      asset: async (_, { id }) => {
+        const response = await fetch(`https://api.coincap.io/v2/assets/${id}`);
+        const { data } = await response.json();
+        return data;
+      },
+    },
+  },
+});
+```
+
+After we created a module we need to add it to our application:
+
+```typescript
+// src/application.ts
+import http from 'http';
+import { createHandler } from 'graphql-http';
+import { createGraphQLApp } from "@frontside/hydraphql";
+import { MyModule } from "./modules/my-module/my-module";
+
+export async function main() {
+  const application = await createGraphQLApp({ modules: [MyModule] });
+
+  const server = http.createServer(
+    createHandler({
+      schema: application.schema,
+      execute: application.createExecution(),
+    })
+  );
+
+  server.listen(4000, () => console.log(`🚀 Server ready at http://localhost:4000/`));
+}
+```
+
+And you are done! Now you can connect to your server from a [playground](https://studio.apollographql.com/sandbox/explorer)
+and run a query:
+
+```graphql
+query {
+  asset(id: "polkadot") {
+    id
+    symbol
+    name
+    supply
+    marketCapUsd
+    volumeUsd24Hr
+    priceUsd
+    changePercent24Hr
+  }
+}
+```
+
+[graphql-modules]: https://the-guild.dev/graphql/modules/docs
+[server]: ./server
