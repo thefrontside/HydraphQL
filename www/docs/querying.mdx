@@ -1,0 +1,131 @@
+## Frontend Development
+
+### How to query the GraphQL API?
+
+We provide a `useGraphQL` hook that you can use to send queries and mutations to the GraphQL API.
+
+The `useGraphQL` hook takes two arguments:
+
+1. operation - which can be query or a mutation
+2. variables - data that is passed to the query
+
+```tsx
+import { graphql } from '../../../../__generated__';
+import { useGraphQL } from '../../../../hooks';
+
+const MyComponentQuery = graphql(/* GraphQL */ `
+  query MyComponent($kind: String!, $name: String!, $namespace: String) {
+    entity(kind: $kind, name: $name) {
+      __typename
+      ... on Component {
+        name
+        description
+      }
+    }
+  }
+`);
+
+export function MyComponent() {
+  const { isLoading, error, data } = useGraphQL(MyComponentQuery, {
+    kind: 'Component',
+    name: 'my-component',
+    namespace: 'default',
+  });
+
+  return data?.entity?.__typename === 'Component' ? data.entity.name : null;
+}
+```
+
+There are a few important pieces here,
+
+1. `useGraphQL` hook expects that your operation will have a name, e.g. our example uses `query MyComponent(...)` instead of `query(...)`. It doesn't support anonymous operations to allow us to automatically handle caching. Note that global queries need to be globally unique.
+2. `graphql(/* GraphQL */ \`` - gives you syntax highlighting in VSCode. You need to install [GraphQL: Language Feature Support](https://marketplace.visualstudio.com/items?itemName=GraphQL.vscode-graphql) to see it.
+3. `__typename` is a very useful field. It allows you to narrow the type so you don't have conditional types. Notice that after `data?.entity?.__typename === 'Component'`, `data.entity.name` is doesn't need optional chaining.
+
+Under the hood, `useGraphQL` uses a combination of `react-query` and `graphql-request`. `react-query` handles retries, failures, and caching, among other things. It expects the query function as a `Promise`. `graphql-request` is a light helper on top of the fetch API which returns that expected `Promise`.
+
+### Type-safe queries with TypeScript
+
+The project is configured to generate TypeScript types for GraphQL queries using `[graphql-codegen](https://the-guild.dev/graphql/codegen)`. It's configured as part of the `yarn dev` script. While running `yarn dev` or other `yarn dev:*` commands, `graphql-codegen` will watch `tsx` and `ts` files for strings tagged with `/* GraphQL */` to find operations and generate TypeScript types for these operations. The resulting TypeScript types will be generated to `packages/app/src/__generated__` directory. You can import `graphql` functon from there using relative imports.
+
+### GraphQL Queries and Fragments
+
+Queries and Fragments are two related concepts that you should be aware of. A query represents all of the data that you need to fetch to present a single page. A fragment is a slice of data needed to render a specific component. A single page will consist of several components which means the query will use several fragments.
+
+![graphq-query-fragment-composition.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/735e495a-ed3d-4ced-a63d-065adef3e559/a7204fc0-a3bf-4bda-a56e-365bf211701c/graphq-query-fragment-composition.png)
+
+### Graphql Queries
+
+You can declare a query by passing a string to the `graphql` function imported from `packages/app/src/__generated__`. You have to use the relative import.
+
+```jsx
+import { graphql } from '../../../../__generated__';
+
+export const ComponentPageQuery = graphql(/* GraphQL */ `
+  query ComponentPage($name: String!, $namespace: String) {
+    entity(kind: "Component", name: $name, namespace: $namespace) {
+      __typename
+      ...AboutCard
+      ...EnvironmentsCard
+    }
+  }
+`);
+```
+
+You can fetch the query with `useGraphQL(ComponentPageQuery, { name: 'my-component'})` hook.
+
+```tsx
+export function ComponentPage() {
+  const { isLoading, error, data } = useGraphQL(ComponentPageQuery, {
+    name: 'my-component',
+  });
+
+  return data?.entity?.__typename === 'Component' ? data.entity.name : null;
+}
+```
+
+### GraphQL Fragments
+
+In the query below, we have multiple fragments, signified by the `...`. The first fragment, `... on GithubOrganization`, is defined within the backend graphql modules. It allows scoping a query to data on a specific type of entity.
+
+```tsx
+import { graphql } from '../../../../__generated__';
+
+const AboutCardFragment = graphql(/* GraphQL */ `
+  fragment AboutCard on Component {
+    ref
+    name
+    description
+    system {
+      ref
+      name
+    }
+    domain {
+      ref
+      name
+    }
+  }
+`);
+
+```
+
+Within the component using this fragment, it requires the `useFragment()` hook and a few type parameters. We set the `<typeof Var>` to be the `const` variable of the query, in this case `GithubOrganizationRepositoriesFragment`. The same is passed to the `useFragment` function as the first arg, and the respective props as the second arg. From here, `entity` should be fully typed and usuable within the React component.
+
+```tsx
+import {
+  type FragmentType,
+  useFragment,
+  graphql,
+} from '../../../../__generated__';
+
+export function AboutCard(props: {
+  entity: FragmentType<typeof AboutCardFragment>;
+}) {
+  const entity = useFragment(
+    AboutCardFragment,
+    props.entity,
+  );
+
+  [...]
+}
+```

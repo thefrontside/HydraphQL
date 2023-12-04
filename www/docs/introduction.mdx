@@ -1,0 +1,84 @@
+## GraphQL basics
+
+GraphQL is a powerfull query language and runtime for APIs. It provides a flexible
+and efficient approach to requesting and manipulating data from servers. With GraphQL,
+clients can specify the exact data they need, and the server responds with
+a JSON payload that matches the requested structure. It allows clients to retrieve
+multiple resources in a single request, reducing over-fetching and under-fetching of data.
+
+The GraphQL schema defines a collection of types and the relationships between them.
+The syntax of the schema language is very intuitive and readable. It makes it easy
+to understand the capabilities of the API.
+
+```graphql
+type User {
+  id: ID!
+  name: String!
+  email: String
+}
+
+type Query {
+  user(id: ID!): User
+}
+```
+
+On the other hand simplicity causes some downsides:
+
+- The schema doesn't describe how the data should be processed to fit the schema.
+  It only describes the data structure. Which means that the developer has to write
+  imperative code to resolve types and fields from the data.
+- The schema language requires a lot of boilerplate code to be written.
+
+```graphql
+interface Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+}
+
+type Human implements Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+  starships: [Starship]
+  totalCredits: Int
+}
+
+type Droid implements Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+  primaryFunction: String
+}
+```
+
+To solve these problems, HydraphQL was created.
+
+## What is HydraphQL?
+
+HydraphQL is a set of GraphQL directives that allow you to enchance your schema,
+declaratively define how the data should be processed and reduce the amount of
+boilerplate code.
+
+```graphql
+interface Character @discriminates(with: "type") {
+  id: ID!
+  name: String! @field
+  friends: [Character] @resolve
+  appearsIn: [Episode]! @resolve(at: "appears_in")
+}
+
+type Human @implements(interface: "Character") {
+  starships: [Starship] @resolve
+  totalCredits: Int @field(at: "total_credits")
+}
+
+type Droid @implements(interface: "Character") {
+  primaryFunction: String @field(at: "primary_function")
+}
+```
+
+HydraphQL transforms directives to raw GraphQL schema and adds a set of resolvers.
