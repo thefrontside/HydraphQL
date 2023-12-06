@@ -199,7 +199,8 @@ const application = await createGraphQLApp({ typeDefs: './src/modules/*.graphql'
 
 Loaders retrieve nodes from different backends. The [Backstage Catalog GraphQL plugin][catalog-module]
 for [`@relation`][relation] directive uses Backstage Catalog API as the default
-data source. You can also create your own custom loaders that you can use with
+data source. To reveal a full power of HydraphQL you have to add at least one data source
+also create your own custom loaders that you can use with
 the [`@resolve`][resolve] directive.
 
 1. Create a new file `./src/apis/myApi.ts`
@@ -210,7 +211,9 @@ import type { NodeQuery } from "@frontside/hydraphql";
 export async function MyApi(queries: readonly NodeQuery[]) {
   const result: Record<string, unknown>[] = [];
   for (const { ref, args } of queries) {
-    /* Fetch data from your backend */
+    result.push(
+      /* Fetch data from your backend */
+    );
   }
   return result;
 }
@@ -225,9 +228,10 @@ import { createServer } from "node:http";
 import { useDataLoader } from "@envelop/dataloader";
 import { useGraphQLModules } from "@envelop/graphql-modules";
 import { MyApi } from "./apis/myApi";
+import { Catalog } from "./apis/catalog";
 
 const application = await createGraphQLApp(/* ... */);
-const loader = createLoader({ MyApi });
+const loader = createLoader({ MyApi, Catalog });
 const yoga = createYoga({
   plugins: [
     useGraphQLModules(application),
