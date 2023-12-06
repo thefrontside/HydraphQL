@@ -1,15 +1,12 @@
-TODO: Add link to type resolving
-TODO: Mention `__resolve` field and link to `@discriminates`
-TODO: Optional `from` argument
+TODO: Mention `__source` field and link to `@discriminates`
 TODO: Link to collections
-TODO: How to add loader to application
 
-The `@resolve` directive is similar to the `@field` directive, but instead of
-resolving a field from the source data, it resolves a field from a 3rd party
-API. This is useful when you want to add fields to your schema that are not
-available in the source data, but are available from another API.
-
-1. To achieve that first of all you need to create a DataLoader with `createLoader` function
+The `@resolve` directive is similar to the [`@field`](./field) directive, but instead of
+resolving a field to primitive from the runtime data, it resolves to a GraphQL Node.
+To start using `@resolve` directive you need to create a data loader for your API with
+`createLoader` function and then make it available in GraphQL context. You can check
+out how to do that for [your GraphQL server](./server). If you are interested in how
+resolving process works checkout [type resolving](./resolving) section.
 
 ```ts
 import querystring from "querystring";
@@ -28,6 +25,32 @@ export const loader = createLoader({
   },
 });
 ```
+
+### Resolve nodes from runtime data
+
+In following example we have a `Component` type that has a `ownerId` field.
+We tell HydraphQL to take a value of `ownerId` field and resolve it to a `Owner` node
+using the same data source used for resolving `Component`.
+
+```graphql
+type Component {
+  owner: Owner @resolve(at: "ownerId")
+}
+```
+
+If for resolving `Owner` node we have to use a different data source, we can specify it
+using `from` argument:
+
+```graphql
+type Component {
+  owner: Owner @resolve(at: "ownerId", from: "OwnersAPI")
+}
+```
+
+How to add a new data source to your application you can read in [Data Loaders](#data-loaders) section.
+
+1. To achieve that first of all you need to create a DataLoader with `createLoader` function
+
 
 2. Then you can use the `@resolve` directive with specifying the loader name of your API:
 

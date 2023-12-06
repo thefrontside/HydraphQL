@@ -1,7 +1,8 @@
 The `@discriminates` directive tells the GraphQL App that an interface
 be discriminated by a given value to another interface or a type.
 The value by path from `with` argument is used to determine to which
-type the interface should be resolved.
+type the interface should be resolved. To more information checkout
+how [type resolving](./resolving) works.
 
 ```graphql
 interface Entity
@@ -46,8 +47,8 @@ type Component @implements(interface: "Entity") {
 
 You can notice in previous example the [`@implements`](./implements) directive is used.
 It's required to use it with `@discriminates` directive. Because it's impossible to
-resolve an interface to a type or other interface those don't implement it. In this case
-HydraphQL will throw an error.
+resolve an interface to a type or other interface those don't implement it. In following
+example HydraphQL will throw an error.
 
 ```graphql
 interface Entity
@@ -66,7 +67,7 @@ type Component {
 There is a special case when your runtime data doesn't have a value
 that can be used to discriminate the interface or there is no type
 that matches the value. In this case, you can define `opaqueType` argument.
-Think about as a fallback type.
+Think about as a fallback type for cases when impossible to resolve exact type.
 
 ```graphql
 interface Entity
@@ -126,7 +127,10 @@ const loader = createLoader({
 ```
 
 ```graphql
-extend interface Node @discriminates(with: "__source") {}
+extend interface Node
+  @discriminates(with: "__source")
+  @discriminationAlias(value: "MyApi", type: "MyApiNode")
+  @discriminationAlias(value: "AnotherApi", type: "AnotherApiNode") {}
 
 type MyApiNode @implements(interface: "Node") {
   # ...
