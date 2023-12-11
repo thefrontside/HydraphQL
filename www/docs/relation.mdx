@@ -1,16 +1,19 @@
-TODO: Link to type resolving
-TODO: Mention it's a part of graphql plugin of Backstage
-TODO: Link to collections
-TODO: Add context about Entity and EntityRef stuff
+`@relation` directive is a special case of [`@resolve`](./resolve)
+provided by [Backstage Catalog GraphQL plugin][catalog-module]. The
+structure of [`Entities`](https://backstage.io/docs/features/software-catalog/references)
+doesn't allow to use `@resolve` directive. Catalog model of Backstage
+is a graph of entities, where each entity can have relationships with
+other entities. Those relationships are defined as a list of references
+in [`relations`][relations] field of an entity. If you want to start using
+Backstage Catalog GraphQL plugin, check out [Backstage](./backstage) section.
+In compare to `@resolve` directive you don't need to create a data loader,
+Backstage Catalog GraphQL plugin already has it.
 
-`@relation` directive allows you to resolve relationships between
-entities. Similar to `@field` directive, it writes a resolver for you
-so you do not have to write a resolver yourself. It assumes that
-relationships are defined as standard `Entity` relationships. The
-`name` argument allows you to specify the type of the relationship. It
-will automatically look up the entity in the catalog.
+## Usage
 
-1. To define a `User` that is the `owner` of a `Component`:
+Each relationship in entity's `relations` list has a `type` of relationship
+and a `targetRef` to another entity. `@relation` directive allows you to
+specify a `name` of the relationship type
 
 ```graphql
 type Component {
@@ -18,12 +21,11 @@ type Component {
 }
 ```
 
-2. The GraphQL server has baked in support for [Relay][relay]. By
-   default, collections defined by a `@relation` directive are modeled as
-   arrays. However, if the relationship is large, and should be
-   paginated, you can specify it with `Connection` as the field type and
-   use the `nodeType` argument to specify what the target of the
-   collection should be.
+If there are more than one relationship with `ownedBy` type, the first
+entity in the list will be returned. If you plan to get multiple entities
+you can use array type or `Connection` type. With `Connection` type you have to
+specify `nodeType` argument to specify to which type nodes should be resolved.
+More about `Connection` type you can read in [Collections](./collections) section.
 
 ```graphql
 type Repository {
@@ -34,8 +36,8 @@ type Repository {
 }
 ```
 
-3. If you have different kinds of relationships with the same type you
-   can filter them by `kind` argument:
+If you have different kinds of entities with the same relationship type you
+can filter them by `kind` argument:
 
 ```graphql
 type System {
@@ -45,3 +47,9 @@ type System {
     @relation(name: "hasPart", nodeType: "Resource", kind: "resource")
 }
 ```
+
+> Note: For now `Catalog` loader doesn't support query arguments for filtering,
+but in the future it will.
+
+[catalog-module]: https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend-module-catalog
+[relations]: https://backstage.io/docs/features/software-catalog/descriptor-format#common-to-all-kinds-relations
