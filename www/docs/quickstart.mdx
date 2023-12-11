@@ -10,7 +10,7 @@ And then you can install HydraphQL itself:
 yarn add @frontside/hydraphql
 ```
 
-## Usage
+### Usage
 
 So after you've installed packages you can create your first GraphQL application.
 HydraphQL uses [graphql-modules] under the hood and returns an instance of
@@ -113,7 +113,7 @@ query {
 }
 ```
 
-## Adding a data loader
+### Adding a data loader
 
 Our application is working, but functionality is pretty limited. We can only fetch
 one asset at a time, but what if we want to fetch multiple assets? Or fetch more
@@ -156,7 +156,7 @@ export async function Exchanges(queries: readonly NodeQuery[]) {
 
 ```typescript
 // src/application.ts
-import http from 'http';
+import { createServer } from 'node:http';
 import { createHandler } from 'graphql-http';
 import { createGraphQLApp, createLoader } from "@frontside/hydraphql";
 import { MyModule } from "./modules/my-module/my-module";
@@ -167,7 +167,7 @@ export async function main() {
   // NOTE: We are creating data loader with a few sources
   const loader = createLoader({ Assets, Markets, Exchanges });
 
-  const server = http.createServer(
+  const server = createServer(
     createHandler({
       context: { loader },
       schema: application.schema,

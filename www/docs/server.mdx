@@ -1,2 +1,125 @@
-TODO: Examples how to use it with different graphql servers
-TODO: How to add loaders to context
+Because HydraphQL built on top of [graphql-modules] you can use it with any
+graphql server a few popular ones are described [here](https://the-guild.dev/graphql/modules/docs/get-started#use-your-application)
+the examples might be outdated. But overall the application created with
+HydraphQL provides: `schema` and custom `execute` and `subscribe` functions,
+which you can use with your graphql server. Bear in mind you have to create and
+pass `loader` to the context of your graphql server.
+
+```typescript
+import { createGraphQLApp } from "@frontside/hydraphql";
+
+const application = await createGraphQLApp({ /* ... */ });
+
+const schema = application.schema;
+const execute = application.createExecution();
+const subscribe = application.createSubscription();
+```
+
+### GraphQL Yoga
+
+[GraphQL Yoga](https://the-guild.dev/graphql/yoga-server/docs) is preferable choice
+and it's a full-featured GraphQL Server with high customizability, focused on easy
+setup, performance & great developer experience.
+
+```typescript
+import { createServer } from 'node:http';
+import { createYoga } from 'graphql-yoga';
+import { useDataLoader } from '@envelop/dataloader';
+import { createGraphQLApp, createLoader } from "@frontside/hydraphql";
+import { useGraphQLModules } from '@envelop/graphql-modules';
+
+const application = await createGraphQLApp({ /* ... */ });
+const loader = createLoader({ /* ... */ });
+
+const yoga = createYoga({
+  plugins: [
+    useGraphQLModules(application),
+    useDataLoader('loader', loader),
+  ]
+});
+
+const server = createServer(yoga)
+
+server.listen(4000, () => console.log(`🚀 Server ready at http://localhost:4000/`));
+```
+
+There are many different plugins for GraphQL Yoga, you can find them on [plugins hub](https://the-guild.dev/graphql/envelop/plugins)
+
+### Apollo Server
+
+Another popular choice is [Apollo Server](https://www.apollographql.com/docs/),
+but usage is a little bit more complicated.
+
+```typescript
+import {
+  GatewayApolloConfig,
+  GatewayInterface,
+  GatewayLoadResult,
+  GatewaySchemaLoadOrUpdateCallback,
+  GatewayUnsubscriber,
+} from '@apollo/server-gateway-interface';
+import { startStandaloneServer } from '@apollo/server/standalone';
+import { createGraphQLApp } from "@frontside/hydraphql";
+
+const application = await createGraphQLApp({ /* ... */ });
+const loader = createLoader({ /* ... */ });
+
+const schema = application.schema;
+const executor = application.createApolloExecutor()
+
+class Gateway implements GatewayInterface {
+  private schemaCallback?: GatewaySchemaLoadOrUpdateCallback;
+
+  async load(options: { apollo: GatewayApolloConfig }): Promise<GatewayLoadResult> {
+    // Apollo expects this schema to be called before this function resolves:
+    // https://github.com/apollographql/apollo-server/issues/7340#issuecomment-1407071706
+    this.schemaCallback?.({ apiSchema: schema, coreSupergraphSdl: '' });
+
+    return { executor };
+  }
+
+  onSchemaLoadOrUpdate(callback: GatewaySchemaLoadOrUpdateCallback): GatewayUnsubscriber {
+    this.schemaCallback = callback;
+    return () => {};
+  }
+
+  async stop() {}
+}
+
+const server = new ApolloServer({
+  gateway: new Gateway(),
+});
+
+await startStandaloneServer(server, {
+  listen: { port: 3000 },
+  context: async () => ({ loader })
+});
+```
+
+### GraphQL HTTP Server
+
+Simple, zero-dependency, [GraphQL over HTTP spec compliant server](https://github.com/graphql/graphql-http).
+The example of this sever is used in [Quick Start](./quickstart#adding-a-data-loader)
+
+```typescript
+import { createServer } from 'node:http';
+import { createHandler } from 'graphql-http';
+import { createGraphQLApp, createLoader } from "@frontside/hydraphql";
+
+export async function main() {
+  const application = await createGraphQLApp({ /* ... */ });
+  const loader = createLoader({ /* ... */ });
+
+  const server = createServer(
+    createHandler({
+      context: { loader },
+      schema: application.schema,
+      execute: application.createExecution(),
+    })
+  );
+
+  server.listen(4000, () => console.log(`🚀 Server ready at http://localhost:4000/`));
+}
+```
+
+[graphql-modules]: https://the-guild.dev/graphql/modules/docs
