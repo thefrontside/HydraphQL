@@ -14,12 +14,10 @@
     ["resolve.mdx", "@resolve"],
     ["relation.mdx", "@relation"]
   ],
-  "Integrations": [
-    ["server.mdx", "GraphQL Server"],
-    ["backstage.mdx", "Backstage plugins"]
-  ],
   "Advanced": [
-    ["resolving.mdx", "Type resolving"],
-    ["collections.mdx", "List and Connection types"]
+    ["resolving.mdx", "Type/Field resolving"],
+    ["collections.mdx", "List and Connection types"],
+    ["hydraphql.mdx", "HydraphQL"],
+    ["server.mdx", "GraphQL Server"]
   ]
 }

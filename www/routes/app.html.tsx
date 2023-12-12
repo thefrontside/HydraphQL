@@ -29,11 +29,11 @@ export function* useAppHtml({
         <meta property="og:url" content={homeURL} />
         <meta
           property="og:description"
-          content="HydraphQL is a declarative resolvers for GraphQL schemas."
+          content="Backstage GraphQL backend plugin provides a GraphQL API for Backstage services."
         />
         <meta
           name="description"
-          content="HydraphQL is a declarative resolvers for GraphQL schemas."
+          content="Backstage GraphQL backend plugin provides a GraphQL API for Backstage services."
         />
         <meta name="twitter:image" content={twitterImageURL} />
         <link rel="icon" href="/assets/images/favicon-effection.png" />
@@ -68,7 +68,7 @@ export function* useAppHtml({
               >
                 <img
                   src="/assets/images/effection-logo.svg"
-                  alt="HydraphQL Logo"
+                  alt="Backstage GraphQL Plugin Logo"
                   width="156px"
                   height="24px"
                 />
@@ -81,16 +81,18 @@ export function* useAppHtml({
                   <a href="/docs/introduction">Guides</a>
                 </li>
                 <li>
-                  <a href="https://www.npmjs.com/package/@frontside/hydraphql">
+                  <a href="https://www.npmjs.com/package/@frontside/backstage-plugin-graphql-backend">
                     NPM
                   </a>
                 </li>
                 <li class="sm:hidden">
-                  <a href="https://github.com/thefrontside/hydraphql">Github</a>
+                  <a href="https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend">
+                    Github
+                  </a>
                 </li>
                 <li class="hidden sm:block">
-                  <a href="https://github.com/thefrontside/hydraphql">
-                    <IconGithHub />
+                  <a href="https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend">
+                    <IconGitHub />
                   </a>
                 </li>
                 <li class="sm:hidden">
@@ -114,7 +116,7 @@ export function* useAppHtml({
             <h1 class="text-sm uppercase font-bold text-blue-primary mb-4">
               About
             </h1>
-            <a class="" href="https://frontside.com" class="text-gray-800">
+            <a href="https://frontside.com" class="text-gray-800">
               Maintained by Frontside <IconExtern />
             </a>
           </section>
@@ -137,7 +139,7 @@ export function* useAppHtml({
               Discord <IconExtern />
             </a>
             <a
-              href="https://github.com/thefrontside/hydraphql"
+              href="https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend"
               class="text-gray-800"
             >
               GitHub <IconExtern />
@@ -168,7 +170,7 @@ const IconExtern = () => (
   </svg>
 );
 
-const IconGithHub = () => (
+const IconGitHub = () => (
   <svg
     height="16"
     focusable="false"

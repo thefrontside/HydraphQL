@@ -1,264 +1,75 @@
-To start using it you will need to install some packages:
+The [Backstage GraphQL plugin][graphql-backend] is designed for schema-first
+development of the GraphQL API. It reduces work necessary to expand the schema
+using schema directives. [Schema directives](https://the-guild.dev/graphql/tools/docs/schema-directives)
+are extensions to GraphQL schema used to automate implementation of the GraphQL API.
+In Backstage GraphQL Plugin, schema directives are used to automatically create
+resolvers. [Resolvers](https://graphql.org/learn/execution/) tell a GraphQL API
+how to provide data for a specific schema type or field. The Backstage GraphQL
+Plugin uses what it knows about the Backstage catalog to reduce the need for
+writing resolvers that call the catalog.
 
-```bash
-yarn add dataloader graphql graphql-modules
-```
+Currently, Backstage implemented two backend systems:
 
-And then you can install HydraphQL itself:
+- [EXPERIMENTAL Backstage backend system](https://backstage.io/docs/backend-system/)
+- [Backstage backend plugins](https://backstage.io/docs/plugins/backend-plugin)
 
-```bash
-yarn add @frontside/hydraphql
-```
+### Usage with backend system
 
-### Usage
-
-So after you've installed packages you can create your first GraphQL application.
-HydraphQL uses [graphql-modules] under the hood and returns an instance of
-[`Application`](https://the-guild.dev/graphql/modules/docs/api#application). You also
-can checkout how to use it with your GraphQL server in the [server].
-
-```typescript
-import { createGraphQLApp } from '@frontside/hydraphql';
-
-export async function main() {
-  const application = await createGraphQLApp();
-
-  const schema = application.schema;
-  const execute = application.createExecution();
-  const subscribe = application.createSubscription();
-}
-```
-
-An empty application isn't very useful, so let's add a simple module to it.
-You can create directory `src/modules` and add two files (a GraphQL schema
-and a module itself):
-
-```graphql
-# src/modules/my-module.graphql
-type Asset {
-  id: ID!
-  symbol: String!
-  name: String!
-  supply: String!
-  marketCapUsd: String!
-  volumeUsd24Hr: String!
-  priceUsd: String!
-  changePercent24Hr: String!
-}
-
-extend type Query {
-  asset(id: String!): Asset!
-}
-```
+The full cover of using GraphQL with EXPERIMENTAL Backstage backend system you can
+find in [readme](https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend/README.md)
 
 ```typescript
-// src/modules/my-module.ts
-import { createModule } from 'graphql-modules';
-import { loadFilesSync } from '@graphql-tools/load-files';
+// packages/backend/src/index.ts
+import { graphqlPlugin } from '@frontside/backstage-plugin-graphql-backend';
+import { graphqlModuleCatalog } from '@frontside/backstage-plugin-graphql-backend-module-catalog';
 
-export const MyModule = createModule({
-  id: 'my-module',
-  dirname: __dirname,
-  typeDefs: loadFilesSync(require.resolve('./my-module.graphql')),
-  resolvers: {
-    Query: {
-      asset: async (_, { id }) => {
-        const response = await fetch(`https://api.coincap.io/v2/assets/${id}`);
-        const { data } = await response.json();
-        return data;
-      },
-    },
-  },
-});
+// Initializing Backstage backend
+const backend = createBackend();
+
+// Adding GraphQL plugin
+backend.use(graphqlPlugin());
+// Adding Catalog GraphQL module
+backend.use(graphqlModuleCatalog());
 ```
 
-After we created a module we need to add it to our application:
+### Usage with backend plugins
+
+Using the old Backstage backend plugins system is also fully covered in
+[readme](https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend/docs/backend-plugins.md)
 
 ```typescript
-// src/application.ts
-import http from 'http';
-import { createHandler } from 'graphql-http';
-import { createGraphQLApp } from "@frontside/hydraphql";
-import { MyModule } from "./modules/my-module";
+// packages/backend/src/plugins/graphql.ts
+import { createRouter } from '@frontside/backstage-plugin-graphql-backend';
+import { Catalog, createCatalogLoader } from '@frontside/backstage-plugin-graphql-backend-module-catalog';
 
-export async function main() {
-  const application = await createGraphQLApp({ modules: [MyModule] });
-
-  const server = http.createServer(
-    createHandler({
-      schema: application.schema,
-      execute: application.createExecution(),
-    })
-  );
-
-  server.listen(4000, () => console.log(`🚀 Server ready at http://localhost:4000/`));
+export default async function createPlugin(
+  env: PluginEnvironment,
+): Promise<Router> {
+  return await createRouter({
+    logger: env.logger,
+    modules: [Catalog],
+    loaders: { ...createCatalogLoader(env.catalogClient) },
+  });
 }
 ```
 
-And you are done! Now you can connect to your server from a [playground](https://studio.apollographql.com/sandbox/explorer)
-and run a query:
+### Catalog module
 
-```graphql
-query {
-  asset(id: "polkadot") {
-    id
-    symbol
-    name
-    supply
-    marketCapUsd
-    volumeUsd24Hr
-    priceUsd
-    changePercent24Hr
-  }
-}
-```
+The single GraphQL plugin isn't useful by itself. To able query Backstage Catalog
+using GraphQL queries you need to install the [Catalog module][catalog-module].
 
-### Adding a data loader
+The Catalog module provides [`@relation`](./relation) schema directive and data
+loader for Catalog API. It also has well written [Catalog GraphQL module][catalog-schema]
+with most basic Backstage types. We recommend to use it as a starting point for
+further [extending] GraphQL schema. But if you'd like to implement your own type
+structure you can use [Relation GraphQL module][relation-schema]. Relation module
+contains only [`@relation`](./relation) schema directive and Catalog data loader.
+Then you can setup [codegen] to generate GraphQL schema for clients and TypeScript
+types for the schema.
 
-Our application is working, but functionality is pretty limited. We can only fetch
-one asset at a time, but what if we want to fetch multiple assets? Or fetch more
-information about assets? We can add a data loader to our application to solve this.
-It's highly recommended to use `createLoader` that creates a [data loader](https://github.com/graphql/dataloader)
-for you even if you have only one data source. Let's add a data loader to our application:
-
-```typescript
-// src/loader.ts
-import type { NodeQuery } from "@frontside/hydraphql";
-
-export async function Assets(queries: readonly NodeQuery[]) {
-  const ids = queries.map(query => query.ref);
-  const response = await fetch(
-    `https://api.coincap.io/v2/assets?ids=${ids.join(',')}&limit=${queries.length}`
-  );
-  const { data } = await response.json();
-
-  return data;
-}
-
-export async function Markets(queries: readonly NodeQuery[]) {
-  const responses = await Promise.all(queries
-    .map(query => query.ref)
-    .map(id => fetch(`https://api.coincap.io/v2/assets/${id}/markets`)));
-  const result = await Promise.all(responses.map(response => response.json()));
-
-  return result.map(({ data }) => data);
-}
-
-export async function Exchanges(queries: readonly NodeQuery[]) {
-  const responses = await Promise.all(queries
-    .map(query => query.ref)
-    .map(id => fetch(`https://api.coincap.io/v2/exchanges/${id}`)));
-  const result = await Promise.all(responses.map(response => response.json()));
-
-  return result.map(({ data }) => data);
-}
-```
-
-```typescript
-// src/application.ts
-import { createServer } from 'node:http';
-import { createHandler } from 'graphql-http';
-import { createGraphQLApp, createLoader } from "@frontside/hydraphql";
-import { MyModule } from "./modules/my-module/my-module";
-import { Assets, Markets, Exchanges } from "./loader";
-
-export async function main() {
-  const application = await createGraphQLApp({ modules: [MyModule] });
-  // NOTE: We are creating data loader with a few sources
-  const loader = createLoader({ Assets, Markets, Exchanges });
-
-  const server = createServer(
-    createHandler({
-      context: { loader },
-      schema: application.schema,
-      execute: application.createExecution(),
-    })
-  );
-
-  server.listen(4000, () => console.log(`🚀 Server ready at http://localhost:4000/`));
-}
-```
-
-In the last step we need to update our schema
-
-```graphql
-extend interface Node
-  @discriminates(with: "__source")
-  @discriminationAlias(value: "Assets", type: "Asset")
-  @discriminationAlias(value: "Markets", type: "Market")
-  @discriminationAlias(value: "Exchanges", type: "Exchange") {}
-
-type Asset @implements(interface: "Node") {
-  symbol: String! @field
-  name: String! @field
-  supply: String! @field
-  marketCapUsd: String! @field
-  volumeUsd24Hr: String! @field
-  priceUsd: String! @field
-  changePercent24Hr: String! @field
-  marketsList: [Market!]! @resolve(at: "id", from: "Markets")
-  markets: Connection @resolve(at: "id", nodeType: "Market", from: "Markets")
-}
-
-type Market @implements(interface: "Node") {
-  exchange: Exchange! @resolve(at: "exchangeId", from: "Exchanges")
-  asset: Asset! @resolve(at: "baseId", from: "Assets")
-  quoteId: String! @field
-  assetSymbol: String! @field(at: "baseSymbol")
-  quoteSymbol: String! @field
-  priceUsd: String! @field
-  volumeUsd24Hr: String! @field
-  volumePercent: String! @field
-}
-
-type Exchange @implements(interface: "Node") {
-  name: String! @field
-  rank: String! @field
-  percentTotalVolume: String! @field
-  volumeUsd: String! @field
-  tradingPairs: String! @field
-  socket: Boolean! @field
-  exchangeUrl: String! @field
-  updated: Int! @field
-}
-```
-
-Now we can fetch multiple assets at once and fetch more information about them:
-
-```graphql
-query {
-  nodes(ids: ["polkadot", "bitcoin", "ethereum"]) {
-    id
-    symbol
-    name
-    supply
-    marketCapUsd
-    volumeUsd24Hr
-    priceUsd
-    changePercent24Hr
-    markets(first: 5) {
-      id
-      exchange {
-        id
-        name
-        rank
-        percentTotalVolume
-        volumeUsd
-        tradingPairs
-        socket
-        exchangeUrl
-        updated
-      }
-      quoteId
-      assetSymbol
-      quoteSymbol
-      priceUsd
-      volumeUsd24Hr
-      volumePercent
-    }
-  }
-}
-```
-
-[graphql-modules]: https://the-guild.dev/graphql/modules/docs
-[server]: ./server
+[graphql-backend]: https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend
+[catalog-module]: https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend-module-catalog
+[catalog-schema]: https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend-module-catalog/src/catalog
+[relation-schema]: https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend-module-catalog/src/relation
+[extending]: ./extending
+[codegen]: ./codegen

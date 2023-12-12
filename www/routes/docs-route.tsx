@@ -27,7 +27,9 @@ export function docsRoute(docs: Docs): JSXMiddleware {
 
     let { topics } = doc;
 
-    let AppHtml = yield* useAppHtml({ title: `${doc.title} | HydraphQL` });
+    let AppHtml = yield* useAppHtml({
+      title: `${doc.title} | Backstage GraphQL Plugin`,
+    });
 
     return (
       <AppHtml>
