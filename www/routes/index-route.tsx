@@ -4,7 +4,8 @@ import { useAppHtml } from "./app.html.tsx";
 
 export function indexRoute(): JSXMiddleware {
   return function* () {
-    let AppHtml = yield* useAppHtml({ title: `HydraphQL` });
+    let title = "Backstage GraphQL Plugin";
+    let AppHtml = yield* useAppHtml({ title });
 
     return (
       <AppHtml>
@@ -13,14 +14,14 @@ export function indexRoute(): JSXMiddleware {
             <hgroup class="text-center col-span-1 md:col-span-3">
               <img
                 class="inline min-w-[20%]"
-                alt="HydraphQL Logo"
+                alt="Backstage GraphQL Plugin Logo"
                 src={"/assets/images/icon-effection.svg"}
                 width="288px"
                 height="288px"
               />
-              <h1 class="text-4xl font-bold leading-7">HydraphQL</h1>
+              <h1 class="text-4xl font-bold leading-7">{title}</h1>
               <p class="text-sm py-4">
-                Declarative resolvers for GraphQL schemas
+                Backend plugin provides a GraphQL API for Backstage services.
               </p>
               <a
                 class="inline-block mt-2 p-3 text-white w-full rounded bg-blue-900 md:w-48"
@@ -30,16 +31,16 @@ export function indexRoute(): JSXMiddleware {
               </a>
             </hgroup>
             <Feature summary="🧩 Modular GraphQL">
-              HydraphQL supports GraphQL Modules, allowing you to compose your
-              schema from smaller, easy to maintain pieces.
+              GraphQL Plugin supports GraphQL Modules, allowing you to compose
+              your schema from smaller, easy to maintain pieces.
             </Feature>
             <Feature summary="💧 DRY Schemas">
               In raw GraphQL schemas you have to declare all fields from
-              implementing interfaces. With HydraphQL you are able declare field
-              once and all interface implementations will include it.
+              implementing interfaces. With GraphQL Plugin you are able declare
+              field once and all interface implementations will include it.
             </Feature>
             <Feature summary="⚡ Less Code">
-              HydraphQL provides a way to define declarative type resolvers
+              GraphQL Plugin provides a way to define declarative type resolvers
               directly in your schema, which means you will have less JavaScript
               code to write and test.
             </Feature>
@@ -49,7 +50,7 @@ export function indexRoute(): JSXMiddleware {
               into one single endpoint.
             </Feature>
             <Feature summary="🤝 Compatibility">
-              HydraphQL is compatible with many popular GraphQL servers,
+              GraphQL Plugin is compatible with many popular GraphQL servers,
               including Apollo Server, GraphQL Yoga, Express GraphQL and more.
             </Feature>
           </section>

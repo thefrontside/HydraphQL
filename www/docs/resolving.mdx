@@ -2,3 +2,50 @@ TODO: Describe how type resolving works in details
 TODO: Describe how field resolving works P+1 and late resolving
 TODO: How to combine with custom resolvers
 TODO: Resolving Connection type
+
+Let's start from that each node in HydraphQL has a unique `id` which contains
+encoded information about the type of the node, which data source use to fetch
+runtime data and also a reference to the data with optional query arguments.
+Here is an example of a node id:
+
+```
+'Group@Catalog@{"ref":"group:default/team-a"}'
+```
+
+So `Group` is typename which was taken from a schema for a field that is being resolved.
+
+```graphql
+interface Component {
+  owner: Group @relation(name: "ownedBy")
+}
+```
+
+`Catalog` is a name of data source from where data should be fetched for this node.
+And `{"ref":"group:default/team-a"}` is a `NodeQuery` which passed to data source function.
+It can also might contain `args` field with query arguments. The way how `NodeQuery` is
+handled you can check out in [`@resolve`](./resolve#creating-a-data-loader) section.
+
+### Resolving fields
+
+For each field, used with `@field/@resolve/@relation` directives, HydraphQL generates
+lazy resolver function, why it's better instead of resolving all fields at once you
+can check out [GraphQL Resolvers: Best Practices](https://medium.com/paypal-tech/graphql-resolvers-best-practices-cd36fdbcef55)
+article.
+
+So for a field with `@field` directive HydraphQL generates a resolver function like:
+
+```typescript
+const customResolver = field.resolve;
+
+field.resolve = async (
+  source: { id: string },
+  args: any,
+  context: { loader: DataLoader },
+  info: GraphQLResolveInfo,
+): Promise<any> => {
+  const { loader } = context;
+  const node = await loader.load(source.id);
+  const rawData = _.get(node, directive.at) ?? directive.default;
+  return customResolver(rawData, args, context, info);
+}
+```
