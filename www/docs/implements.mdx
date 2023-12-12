@@ -1,0 +1,52 @@
+The `@implements` directive allows you to inherit fields from another
+interface. We created this directive to make it easier to implement
+interfaces that inherit from other interfaces. It makes GraphQL types
+similar to extending types in TypeScript. In TypeScript, when a class
+inherits another class, the child class automatically inherits
+properties and methods of the parent class. This functionality doesn't
+have an equivalent in GraphQL. Without this directive, the `Service`
+type in GraphQL would need to re-implement many fields that are
+defined on implemented interfaces which leads to lots of duplication.
+
+The `@implements` directive copies all fields and their resolvers from
+implemented interfaces, but it doesn't tell how to resolve runtime data
+for that you have to use [`discriminates`](./discriminates) directive.
+
+Use this directive to define a new type that includes all of the
+properties of the parent interface.
+
+```graphql
+interface Node {
+  id: ID!
+}
+
+interface Entity @implements(interface: "Node") {
+  name: String! @field(at: "metadata.name")
+  kind: String! @field
+  namespace: String! @field(at: "metadata.namespace")
+}
+
+interface Component @implements(interface: "Entity") {
+  version: String! @field(at: "spec.version")
+}
+
+type Service @implements(interface: "Component") {
+  endpoint: String! @field(at: "spec.endpoint")
+}
+```
+
+In the output schema it is transformed into:
+
+```graphql
+type Service implements Component & Entity & Node {
+  id: ID!
+  name: String!
+  kind: String!
+  namespace: String!
+  version: String!
+  endpoint: String!
+}
+```
+
+> :warning: The `@implements` directive hasn't supported implementation
+> from multiple interfaces yet.

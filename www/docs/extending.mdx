@@ -1,0 +1,275 @@
+### Extending the schema
+
+GraphQL API follows standard [GraphQL syntax rules][graphql-syntax].
+The standard GraphQL syntax augmented with [directives provided by HydraphQL][directives]
+which allow extending schema in low-code fashion.
+You can extend the schema to add new fields, types, modules and loaders.
+
+- *Fields* - properties of node that you can query
+- *Edges* - fields that resolve to other nodes in the graph
+- *Types* - new kinds of objects that can be queried
+- *Modules* - a way to organize groups of types
+- *Loaders* - resolve data from other sources
+
+> :warning: Avoid removing or changing the definition of existing fields & types
+> unless you're confident that no client is using that schema.
+
+### Adding a field
+
+A field is a property on an object returned by the GraphQL API. It usually resolves
+to a primitive value like a string, a number or a boolean. You can use
+the [`@field`][field] directive provided by HydraphQL to specify how the value
+will be resolved for a specific field. Checkout the [Backstage Catalog GraphQL plugin][catalog-module]
+for an example of the field syntax.
+
+```graphql
+type Component {
+  name: String @field(at: "metadata.name")
+}
+```
+
+### Adding an edge
+
+Edges represent relationships between nodes in the graph returned by the GraphQL API.
+Edges resolve to other types in the graph.
+
+The GraphQL API provides 2 syntaxes for defining edges:
+
+### One-to-one
+
+Use one-to-one syntax when a node is related to only one node. For example,
+a component can have only one owner is expressed in the following way. For more
+information checkout [`@resolve`][resolve], There is also [`@relation`][relation] directive
+implemented in the [Backstage Catalog GraphQL plugin][catalog-module] that resolves nodes
+with slightly different way.
+
+```graphql
+type Component {
+  owner: User @resolve(at: "ownerId")
+}
+```
+
+### One-to-many
+
+Use one-to-many syntax when a node is related to multiple nodes that do not require
+pagination. For example, a component has multiple modules but usually less than 20.
+Or use the `Connection` syntax when a node is related to many many nodes.
+For example, a group may have thousands of members. Checkout the [Connection][connection]
+section for more information.
+
+```graphql
+type Component {
+  modules: [Module!] @resolve(at: "modules")
+}
+
+type Group {
+  members: Connection @resolve(at: "members", from: "UserAPI")
+}
+```
+
+### Adding a type
+
+A type represents nodes in the graph that have the same shape.
+
+### Defining an interface
+
+An interface generalizes a set of fields that are common to multiple types and helps
+to understand the shape of the graph. The main difference between an interface and a type
+is that an interface must be resolved to any its implementation type.
+
+```graphql
+interface Entity {
+  id: ID!
+  title: String
+  description: String
+}
+
+type User implements Entity {
+  id: ID!
+  title: String
+  description: String
+  name: String!
+  email: String!
+}
+```
+
+### Implement interface
+
+Types can implement interfaces which means that the type has fields defined on the interface.
+HydraphQL provides [`@implements`][implements] directive that automatically copies fields from
+interfaces that a type implements. And you still have to write a type resolver for `Entity` interface.
+But there is much simplier way to do it with [`@discriminates`][discriminates] directive. It allows
+specifying a field whose value will be used to determine the type to resolve to.
+And HydraphQL generates a type resolver for you.
+
+```graphql
+interface Entity
+  @implements(interface: "Node")
+  @discriminates(with: "kind") {
+  title: String
+  description: String
+}
+
+type GithubOrganization @implements(interface: "Entity") {
+  login: String @field(at: "spec.login")
+  avatarUrl: String @field(at: "spec.avatarUrl")
+}
+```
+
+**Note**: The `@implements` directive copies fields and their resolvers from `Entity` to
+`GithubOrganization` type. Without `@implements`, you would need to explicitly write
+out all of the Entity interface's fields and implement your own field resolvers for the
+`GithubOrganization` type.
+
+### Extend an existing type
+
+When you want to add a field to an existing type that's defined in a module that you don't
+have control over - for example, the Catalog module. In these cases, you can use the `extend`
+keyword. For example, the following will extend the `Component` type.
+
+```graphql
+extend type Component {
+  hello: String!
+}
+```
+
+**Note**: Bear in mind that you can only extend types that are defined in the source module
+with `extend` keyword. For example, this will not work.
+
+```graphql
+# Module A
+type Component {
+  name: String!
+}
+```
+
+```graphql
+# Module B
+extend type Component {
+  hello: String!
+}
+```
+
+### Adding a module
+
+A module is a logical grouping a GraphQL schema and resolvers. A good example of
+GraphQL modules that uses HydraphQL is the [Backstage Catalog GraphQL plugin][catalog-module].
+Here is how to add a new module to HydraphQL application.
+
+1. Create a graphql file `myNewModule.graphql` in `./src/modules` directory
+2. Add `createModule` to `./src/modules/index.ts`
+
+```tsx
+import { loadFilesSync } from "@graphql-tools/load-files";
+import { createModule } from "graphql-modules";
+
+export const MyNewModule = createModule({
+  id: 'my-new-module',
+  dirname: __dirname,
+  typeDefs: loadFilesSync(require.resolve("./myNewModule.graphql")),
+  // Define custom resolvers if needed
+  resolvers: {
+    /* ... */
+  },
+});
+```
+
+3. Pass new module to `createGraphQLApp` function
+
+```tsx
+import { createGraphQLApp } from "@frontside/hydraphql";
+import { MyNewModule } from "./modules";
+
+const application = await createGraphQLApp({ modules: [MyNewModule] });
+```
+
+### Schema only
+
+In case when your module doesn't have custom resolvers, you can pass the schema
+directly to `createGraphQLApp` and HydraphQL creates a module for you.
+
+```tsx
+import { createGraphQLApp } from "@frontside/hydraphql";
+import { loadFilesSync } from "@graphql-tools/load-files";
+
+const application = await createGraphQLApp({ typeDefs: './src/modules/*.graphql' });
+```
+
+### Loaders
+
+Loaders retrieve nodes from different backends. The [Backstage Catalog GraphQL plugin][catalog-module]
+for [`@relation`][relation] directive uses Backstage Catalog API as the default
+data source. To reveal a full power of HydraphQL you have to add at least one data source
+also create your own custom loaders that you can use with
+the [`@resolve`][resolve] directive.
+
+1. Create a new file `./src/apis/myApi.ts`
+
+```typescript
+import type { NodeQuery } from "@frontside/hydraphql";
+
+export async function MyApi(queries: readonly NodeQuery[]) {
+  const result: Record<string, unknown>[] = [];
+  for (const { ref, args } of queries) {
+    result.push(
+      /* Fetch data from your backend */
+    );
+  }
+  return result;
+}
+```
+
+2. Create a data loader with `MyApi` source and use it in your GraphQL server
+
+```typescript
+import { createGraphQLApp, createLoader } from "@frontside/hydraphql";
+import { createYoga } from "graphql-yoga";
+import { createServer } from "node:http";
+import { useDataLoader } from "@envelop/dataloader";
+import { useGraphQLModules } from "@envelop/graphql-modules";
+import { MyApi } from "./apis/myApi";
+import { Catalog } from "./apis/catalog";
+
+const application = await createGraphQLApp(/* ... */);
+const loader = createLoader({ MyApi, Catalog });
+const yoga = createYoga({
+  plugins: [
+    useGraphQLModules(application),
+    useDataLoader("loader", loader)
+  ],
+});
+const server = createServer(yoga);
+
+server.listen(4000, () => {
+  console.info("Server is running on http://localhost:4000/graphql");
+});
+```
+
+3. You can use your loader with [`@resolve`][resolve] directive
+
+```graphql
+extend interface Node
+  @discriminates(with: "__source")
+  @discriminationAlias(value: "MyApi", type: "MyApiNode")
+  @discriminationAlias(value: "Catalog", type: "Entity")
+
+type Entity @implements(interface: "Node") {
+  title: String @field(at: "metadata.title")
+  description: String @field(at: "metadata.description")
+  externalNode: MyApiNode @resolve(at: "spec.externalId", from: "MyApi")
+}
+
+type MyApiNode @implements(interface: "Node") {
+  # ...
+}
+```
+
+[graphql-syntax]: https://graphql.org/learn/
+[directives]: https://github.com/thefrontside/HydraphQL#directives-api
+[field]: ./field
+[relation]: ./relation
+[resolve]: ./resolve
+[connection]: ./collections
+[implements]: ./implements
+[discriminates]: ./discriminates
+[catalog-module]: https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend-module-catalog/src/catalog/catalog.graphql

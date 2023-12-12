@@ -1,0 +1,213 @@
+### Graph as the medium
+
+The Backstage catalog model is deliberately designed to be open to extension
+so that it can house whatever set of attributes a company might need to represent
+its entities. This means that the `spec` property of an Entity can contain
+anything (which is good), but at the cost of being awkward to work with because
+it is just a blob of un-typed JSON data over which each client must layer its
+own structure at the point of consumption. For example:
+
+```typescript
+let employee = await client.getEntityByRef("employee:cowboyd");
+
+// let's say that "address" was changed to "location"
+employee.spec.address.country; // TypeError: property 'country' does not exist on undefined
+```
+
+If the shape of the data changes, the client side types will just be straight
+up wrong, and as a result must be carefully kept in sync with the backend.
+
+The story is similar when it comes to working with relationships. The flexibility
+of the catalog model in this regard is powerful in that any entity can be related
+to any other entity, and the type of relation that can join two entities together
+in this manner is unbounded. Once again however, [working] with [these relationships][these]
+can [be awkward][awkward] using the `CatalogApi` by itself.
+
+Not only is it cumbersome, it can also be inefficient. This is because without a
+[bespoke batching mechanism][batching] at the point of consumption, the lowest
+activation energy solution is going to suffer from the N+1 problem by manually
+dereferencing each relationship:
+
+```typescript
+const [ownedByRelation] = getEntityRelations(entity, RELATION_OWNED_BY);
+const owner = ownedByRelation
+  ? await client.getEntityByRef(ownedByRelation.targetRef)
+  : null;
+```
+
+### GraphQL API
+
+Compare how GraphQL works where if we attempt to query a field that does not exist,
+it immediately triggers an error. This is because we cannot express the API
+without also expressing its shape. There is more info about [querying]
+
+```typescript
+let employee = await client.query(
+  `node(id: "employee:cowboyd") { address { country } }`
+); // TypeError: field "address" does not exist on type "Employee"
+```
+
+Even better, we can use [GraphQL Codegen](https://the-guild.dev/graphql/codegen)
+to surface this category of error at *compile time* which can yield enormous
+times savings for each dev cycle. Check out how to setup [codegen].
+
+In terms of relationships a GraphQL API has the possibility of both querying
+and traversing relationships as the natural expression of its schema, we can
+just access it directly:
+
+```typescript
+const owner = entity.ownedBy;
+```
+
+And, because resolution happens on the server, it can be responsible for properly
+batching entity loads according to the depth of the query, thereby removing
+[the burden][burden] from the shoulders of the developer.
+
+### GraphQL Schema
+
+The entity format is great for representing the graph internally, but it imposes
+unnecessary ceremony when working with it from the outside. As an API consumer,
+nobody cares whether a description of a user's role is in `metadata.description`,
+or if their name to display on a web page is inside `spec.profile.displayName`,
+they just want the data. By the same token, in order to work with related entities,
+nobody wants to have to go through the rigmarole of reading relations and
+assembling them by hand. Instead, they just want to access the related records
+directly.
+
+To make this happen, we define a set of [GraphQL directives][directives] that
+allow us to directly map values from an entity to a GraphQL type and thereby
+generate the resolvers for it automatically. To map the fields like the ones
+above, we introduce a [`@field`][field] directive to pull data out of the envelope and
+give it directly to the developer.
+
+```graphql
+interface Entity {
+  name: String! @field(at: "metadata.name")
+  kind: String! @field(at: "kind")
+  namespace: String! @field(at: "metadata.namespace", default: "default")
+  title: String! @field(at: "metadata.title", default: "")
+  description: String! @field(at: "metadata.description", default: "")
+  tags: [String] @field(at: "metadata.tags")
+  links: [EntityLink] @field(at: "metadata.links")
+}
+```
+
+> 💡By default the kind of an entity is determined by the GraphQL type's name,
+> so in the preceding example, the entities to which this applies will be
+> kind: "User" more on this mechanism later
+
+GraphQL provides the opportunity to navigate relationships in the same way as
+you would a simple data structure, and because the Backstage catalog has a
+normalized way of expressing relations between nodes, we can leverage it to
+automatically write the resolvers for related records. To do this, we introduce
+a [`@relation`][relation] directive. Take this example snippet from the proposed
+catalog schema:
+
+```graphql
+union Owner = User | Group
+
+type System {
+  owner: Owner! @relation(name: "ownedBy")
+  domain: Domain @relation(name: "partOf")
+  apis: Connection @relation(name: "hasPart", nodeType: "API", kind: "api")
+  components: Connection
+    @relation(name: "hasPart", nodeType: "Component", kind: "component")
+  resources: Connection
+    @relation(name: "hasPart", nodeType: "Resource", kind: "resource")
+}
+```
+
+This will tell the catalog loader to look up the relation of type “ownedBy” and
+use its target as the value of the `owner` property.
+
+```typescript
+system.owner.name //=> "team-a"
+```
+
+With all advantages that GraphQL provides there are some aspects that might add
+difficulties of maintaining GraphQL schema. One of that aspects is GraphQL
+doesn't have type inheritance, instead it uses composition:
+
+```graphql
+interface Node {
+  id: ID!
+}
+
+interface Entity implements Node {
+  id: ID!
+  #... Entity fields ...
+}
+
+type System implements Node & Entity {
+  id: ID!
+  #... Entity fields ...
+  #... System fields ...
+}
+```
+
+Which means if type `System` implements `Node` and `Entity` interfaces developer
+must declare all fields of implementing interfaces. As a result GraphQL schema
+contains a lot of repeating code. To simplify work with types we introduce a
+[`@implements`][implements] directive so code from above will be:
+
+```graphql
+interface Node {
+  id: ID!
+}
+
+interface Entity @implements(interface: "Node") {
+  #... Entity fields ...
+}
+
+type System @implements(interface: "Entity") {
+  #... System fields ...
+}
+```
+
+GraphQL Plugin has a schema mapper that process [`@implements`][implements]
+directives and unwind them to the final schema
+
+Another aspect of working with GraphQL is an input data must be resolved to a
+specific object type and developer have to implement type resolvers for each
+interface they have. That leads to bunch of imperative code alongside with
+declarative schema and as any other project's code it requires to be covered by
+unit tests. In the most cases these code will be straight forward by matching
+certain fields' values with object type names, so why not to make life easier
+through a declarative approach. To make it real we introduce
+[`@discriminates` and `@discriminationAlias`][discriminates] directives:
+
+```graphql
+interface Entity @discriminates(with: "kind") {
+  #... Entity fields ...
+}
+
+interface Component
+  @implements(interface: "Entity")
+  @discriminates(with: "spec.type")
+  @discriminationAlias(value: "service", type: "Service")
+  @discriminationAlias(value: "website", type: "Website")
+  @discriminationAlias(value: "library", type: "Library") {
+  #... Component fields ...
+}
+```
+
+Let's dive into this. By `with` argument we are telling GraphQL application to
+take a value from a field `kind` of input data and use it as a type name to
+discriminate input data as a specific type. For example `kind == 'Component'`
+and `Component` is an interface, but we need to resolve our data to object type,
+so we have to go further. For `Component` interface we tell GraphQL application
+to look at `spec.type` field and here we declared a few aliases to what type
+data should be resolve for specific value.
+
+[working]: https://github.com/thefrontside/backstage/blob/master/plugins/catalog-react/src/utils/getEntityRelations.ts#L29-L48
+[these]: https://github.com/thefrontside/backstage/blob/cf28822/plugins/catalog/src/components/AboutCard/AboutContent.tsx#L84-L97
+[awkward]: https://github.com/thefrontside/backstage/blob/cf28822/plugins/catalog/src/components/SystemDiagramCard/SystemDiagramCard.tsx#L172-L265
+[batching]: https://github.com/thefrontside/backstage/blob/master/plugins/catalog-graph/src/components/EntityRelationsGraph/useEntityStore.ts
+[burden]: https://github.com/thefrontside/backstage/blob/master/plugins/catalog-graph/src/components/EntityRelationsGraph/useEntityStore.ts
+[directives]: https://graphql.org/learn/queries/#directives
+[field]: ./field
+[relation]: ./relation
+[implements]: ./implements
+[discriminates]: ./discriminates
+[querying]: ./querying
+[codegen]: ./codegen
