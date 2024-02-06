@@ -143,15 +143,15 @@ option for GraphQL plugin.
 
 ### `@discriminationAlias`
 
-By default value from `with` argument is used to find a type as-is or converted to PascalCase.
-And it's fairly enough for most cases. But sometimes you need to match the value with a type
-that has a different name. In this case, you can use `@discriminationAlias` directive.
+By default value from `with` argument is used to find a type as-is or converted to PascalCase. 
+Sometimes you need to match the value with a type that has a different name. 
+In this case, you can use `@discriminationAlias` directive.
 
 ```graphql
 interface API
   @implements(interface: "Node")
   @discriminates(with: "spec.type")
-  @discriminationAlias(from: "openapi", to: "OpenAPI") {
+  @discriminationAlias(value: "openapi", type: "OpenAPI") {
     # ...
   }
 
