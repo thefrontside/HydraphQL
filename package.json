@@ -79,7 +79,7 @@
     "eslint": "^8.48.0",
     "expect": "^29.6.4",
     "graphql": "^16.6.0",
-    "graphql-modules": "^2.2.0",
+    "graphql-modules": "^2.3.0",
     "husky": "^8.0.0",
     "lint-staged": "^14.0.1",
     "pinst": "^3.0.0",
@@ -108,6 +108,6 @@
     ]
   },
   "resolutions": {
-    "graphql-modules@^2.2.0": "patch:graphql-modules@npm%3A2.2.0#./.yarn/patches/graphql-modules-npm-2.2.0-dd757f391f.patch"
+    "graphql-modules@^2.3.0": "patch:graphql-modules@npm%3A2.3.0#./.yarn/patches/graphql-modules-npm-2.3.0-ad0e8d9884.patch"
   }
 }
