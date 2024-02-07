@@ -1,7 +1,7 @@
 {
   "name": "@frontside/hydraphql",
   "description": "Tool that DRY and then Hydrate your GraphQL schema",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
