@@ -1,5 +1,11 @@
 # @frontside/hydraphql
 
+## 0.1.2
+
+### Patch Changes
+
+- 3f6a900: Upgraded graphql-modules to 2.3.0
+
 ## 0.1.1
 
 ### Patch Changes
