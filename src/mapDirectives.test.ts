@@ -1256,7 +1256,9 @@ describe("mapDirectives", () => {
             }),
           ),
       );
-    const query = await createGraphQLAPI(TestModule, loader, true);
+    const query = await createGraphQLAPI(TestModule, loader, {
+      generateOpaqueTypes: true,
+    });
     const queryNode = (id: NodeId) =>
       query(/* GraphQL */ `
         node(id: ${JSON.stringify(encodeId(id))}) {

@@ -1,5 +1,5 @@
 import { Kind } from "graphql";
-import type { DocumentNode } from "graphql";
+import type { DocumentNode, GraphQLSchema } from "graphql";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { validateSchema } from "graphql";
 import type { Module, Resolvers } from "graphql-modules";
@@ -7,9 +7,15 @@ import { mapDirectives } from "./mapDirectives.js";
 import type { FieldDirectiveMapper, GraphQLModule } from "./types.js";
 import { CoreSync } from "./index.js";
 
+export interface TransformSchemaOptions {
+  postTransform?: (schema: GraphQLSchema) => GraphQLSchema;
+  generateOpaqueTypes?: boolean;
+}
+
+// TODO Use graphql-codegen plugin API to transform schema
 export function transformSchema(
   additionalModules: (GraphQLModule | Module)[] = [],
-  { generateOpaqueTypes }: { generateOpaqueTypes?: boolean } = {},
+  { generateOpaqueTypes, postTransform }: TransformSchemaOptions = {},
 ) {
   const modules = [CoreSync(), ...additionalModules];
   const directiveMappers: Record<string, FieldDirectiveMapper> = {};
@@ -36,10 +42,12 @@ export function transformSchema(
     generateOpaqueTypes,
   });
 
-  const errors = validateSchema(schema);
+  const postSchema = postTransform ? postTransform(schema) : schema;
+
+  const errors = validateSchema(postSchema);
 
   if (errors.length > 0) {
     throw new Error(errors.map((e) => e.message).join("\n"));
   }
-  return schema;
+  return postSchema;
 }

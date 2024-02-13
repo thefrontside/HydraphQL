@@ -6,17 +6,18 @@ import { useDataLoader } from "@envelop/dataloader";
 import { useGraphQLModules } from "@envelop/graphql-modules";
 import { createGraphQLApp } from "../createGraphQLApp.js";
 import type { GraphQLContext, GraphQLModule } from "../types.js";
+import { TransformSchemaOptions } from "src/transformSchema.js";
 
 export async function createGraphQLAPI(
   TestModule: GraphQLModule | Module,
   loader: (
     context: Record<string, unknown> & GraphQLContext,
   ) => DataLoader<string, unknown>,
-  generateOpaqueTypes?: boolean,
+  options: TransformSchemaOptions = {},
 ) {
   const application = await createGraphQLApp({
     modules: [TestModule],
-    generateOpaqueTypes,
+    ...options,
   });
 
   const run = envelop({
