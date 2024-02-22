@@ -11,11 +11,17 @@ export function transformSchema(
   additionalModules: (GraphQLModule | Module)[] = [],
   { generateOpaqueTypes }: { generateOpaqueTypes?: boolean } = {},
 ) {
+  const postTransformers: GraphQLModule["postTransform"][] = [];
   const modules = [CoreSync(), ...additionalModules];
   const directiveMappers: Record<string, FieldDirectiveMapper> = {};
   const typeDefs: DocumentNode[] = modules.flatMap((m) => {
-    const { module: gqlModule, mappers = {} } = "id" in m ? { module: m } : m;
+    const {
+      module: gqlModule,
+      mappers = {},
+      postTransform = undefined,
+    } = "id" in m ? { module: m } : m;
     const documents = gqlModule.typeDefs;
+    postTransformers.push(postTransform);
     documents.forEach((document) => {
       document.definitions.forEach((definition) => {
         if (definition.kind !== Kind.DIRECTIVE_DEFINITION) return;
@@ -36,10 +42,15 @@ export function transformSchema(
     generateOpaqueTypes,
   });
 
-  const errors = validateSchema(schema);
+  const postSchema = postTransformers.reduce(
+    (s, transform) => transform?.(s) ?? s,
+    schema,
+  );
+
+  const errors = validateSchema(postSchema);
 
   if (errors.length > 0) {
     throw new Error(errors.map((e) => e.message).join("\n"));
   }
-  return schema;
+  return postSchema;
 }
