@@ -4,6 +4,7 @@ import type {
   GraphQLFieldConfig,
   GraphQLNamedType,
   GraphQLObjectType,
+  GraphQLSchema,
 } from "graphql";
 import type { Application, Module } from "graphql-modules";
 
@@ -64,5 +65,6 @@ export interface NamedType {
 
 export interface GraphQLModule {
   mappers?: Record<string, FieldDirectiveMapper>;
+  postTransform?: (schema: GraphQLSchema) => GraphQLSchema;
   module: Module;
 }
