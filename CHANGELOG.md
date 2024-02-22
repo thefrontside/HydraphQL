@@ -1,5 +1,11 @@
 # @frontside/hydraphql
 
+## 0.1.3
+
+### Patch Changes
+
+- d35d38a: Add postTransform option to allow apply custom transformations after schema mapping
+
 ## 0.1.2
 
 ### Patch Changes
