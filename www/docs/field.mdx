@@ -1,0 +1,85 @@
+The `@field` directive allows you to access properties on an object
+using a given path. It allows you to specify a resolver for a field
+from the schema without actually writing a real resolver at all. Under
+the hood, it's creating the resolver for you. To see this in action,
+check out the
+[`catalog.graphql`](https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend-module-catalog/src/catalog/catalog.graphql)
+which uses the `@field` directive extensively module to retrieve
+properties like `namespace`, `title` and others.
+
+`@field` directive doesn't resolve GraphQL nodes and primarly used for mapping
+primitives, such as strings, numbers, booleans, etc. To resolve GraphQL nodes
+from the same source or other sources, use [`@resolve`](./resolve) directive.
+
+### Simple example
+
+Mapping `namespace.name` field from source data to `Entity#name` field
+
+```graphql
+type Entity {
+  name: String! @field(at: "namespace.name")
+}
+```
+
+HydraphQL creates a resolver for `Entity#name` field that looks like this:
+
+```typescript
+{ Entity: { name: (source) => source.namespace.name } }
+```
+
+### Mapping field with dots
+
+If source path's fields contain dots `{ spec: { "data.label": "..." } }`, you
+can use an array:
+
+```graphql
+type Entity {
+  label: String @field(at: ["spec", "data.label"])
+}
+```
+
+### Map field with fallback value
+
+You can specify a default value as a fallback if the field is null or doesn't exist:
+
+```graphql
+type Entity {
+  tag: String! @field(at: "spec.tag", default: "N/A")
+}
+```
+
+### Omit optional `at` argument
+
+`at` argument is optional. You can omit it if you'd like to map field 1:1:
+
+```graphql
+type Entity {
+  name: String! @field
+}
+```
+
+### Map field with custom resolver
+
+In some rare cases you might want to process the value after mapping. You can
+add your custom resolver for that:
+
+```graphql
+# myModule.graphql
+
+type Entity {
+  name: String! @field(at: "namespace.name")
+}
+```
+
+```typescript
+// myModule.ts
+
+export const myModule = createModule({
+  // ...
+  resolvers: {
+    Entity: {
+      name: (source) => source.name.toUpperCase(),
+    },
+  },
+});
+```

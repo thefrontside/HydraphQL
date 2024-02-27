@@ -1,0 +1,352 @@
+### GraphQL basics
+
+GraphQL is a powerful query language and runtime for APIs. It provides a flexible
+and efficient approach to requesting and manipulating data from servers. With GraphQL,
+clients can specify the exact data they need, and the server responds with
+a JSON payload that matches the requested structure. It allows clients to retrieve
+multiple resources in a single request, reducing over-fetching and under-fetching of data.
+
+The GraphQL schema defines a collection of types and the relationships between them.
+The syntax of the schema language is very intuitive and readable. It makes it easy
+to understand the capabilities of the API.
+
+```graphql
+type User {
+  id: ID!
+  name: String!
+  email: String
+}
+
+type Query {
+  user(id: ID!): User
+}
+```
+
+On the other hand simplicity causes some downsides:
+
+- The schema doesn't describe how the data should be processed to fit the schema.
+  It only describes the data structure. Which means that the developer has to write
+  imperative code to resolve types and fields from the data.
+- The schema language requires a lot of boilerplate code to be written.
+
+```graphql
+interface Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+}
+
+type Human implements Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+  starships: [Starship]
+  totalCredits: Int
+}
+
+type Droid implements Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+  primaryFunction: String
+}
+```
+
+To solve these problems, HydraphQL was created.
+
+### What is HydraphQL?
+
+HydraphQL is a set of GraphQL directives that allow you to enhance your schema,
+declaratively define how the data should be processed and reduce the amount of
+boilerplate code. It's the core piece of [Backstage GraphQL Plugin](./backstage)
+
+```graphql
+interface Character @discriminates(with: "type") {
+  id: ID!
+  name: String! @field
+  friends: [Character] @resolve
+  appearsIn: [Episode]! @resolve(at: "appears_in")
+}
+
+type Human @implements(interface: "Character") {
+  starships: [Starship] @resolve
+  totalCredits: Int @field(at: "total_credits")
+}
+
+type Droid @implements(interface: "Character") {
+  primaryFunction: String @field(at: "primary_function")
+}
+```
+
+### Quick start
+
+HydraphQL transforms directives to raw GraphQL schema and adds a set of resolvers.
+
+To start using it you will need to install some packages:
+
+```bash
+yarn add dataloader graphql graphql-modules
+```
+
+And then you can install HydraphQL itself:
+
+```bash
+yarn add @frontside/hydraphql
+```
+
+### Usage
+
+So after you've installed packages you can create your first GraphQL application.
+HydraphQL uses [graphql-modules] under the hood and returns an instance of
+[`Application`](https://the-guild.dev/graphql/modules/docs/api#application). You also
+can checkout how to use it with your GraphQL server in the [server].
+
+```typescript
+import { createGraphQLApp } from '@frontside/hydraphql';
+
+export async function main() {
+  const application = await createGraphQLApp();
+
+  const schema = application.schema;
+  const execute = application.createExecution();
+  const subscribe = application.createSubscription();
+}
+```
+
+An empty application isn't very useful, so let's add a simple module to it. You can
+create directory `src/modules` and add two files (a GraphQL schema and a module itself):
+
+```graphql
+# src/modules/my-module.graphql
+type Asset {
+  id: ID!
+  symbol: String!
+  name: String!
+  supply: String!
+  marketCapUsd: String!
+  volumeUsd24Hr: String!
+  priceUsd: String!
+  changePercent24Hr: String!
+}
+
+extend type Query {
+  asset(id: String!): Asset!
+}
+```
+
+```typescript
+// src/modules/my-module.ts
+import { createModule } from 'graphql-modules';
+import { loadFilesSync } from '@graphql-tools/load-files';
+
+export const MyModule = createModule({
+  id: 'my-module',
+  dirname: __dirname,
+  typeDefs: loadFilesSync(require.resolve('./my-module.graphql')),
+  resolvers: {
+    Query: {
+      asset: async (_, { id }) => {
+        const response = await fetch(`https://api.coincap.io/v2/assets/${id}`);
+        const { data } = await response.json();
+        return data;
+      },
+    },
+  },
+});
+```
+
+After we created a module we need to add it to our application:
+
+```typescript
+// src/application.ts
+import http from 'http';
+import { createHandler } from 'graphql-http';
+import { createGraphQLApp } from "@frontside/hydraphql";
+import { MyModule } from "./modules/my-module";
+
+export async function main() {
+  const application = await createGraphQLApp({ modules: [MyModule] });
+
+  const server = http.createServer(
+    createHandler({
+      schema: application.schema,
+      execute: application.createExecution(),
+    })
+  );
+
+  server.listen(4000, () => console.log(`🚀 Server ready at http://localhost:4000/`));
+}
+```
+
+And you are done! Now you can connect to your server from a [playground]
+and run a query:
+
+```graphql
+query {
+  asset(id: "polkadot") {
+    id
+    symbol
+    name
+    supply
+    marketCapUsd
+    volumeUsd24Hr
+    priceUsd
+    changePercent24Hr
+  }
+}
+```
+
+### Adding a data loader
+
+Our application is working, but functionality is pretty limited. We can only fetch
+one asset at a time, but what if we want to fetch multiple assets? Or fetch more
+information about assets? We can add a data loader to our application to solve this.
+It's highly recommended to use `createLoader` that creates a [data loader][loader]
+for you even if you have only one data source. Let's add a data loader to our application:
+
+```typescript
+// src/loader.ts
+import type { NodeQuery } from "@frontside/hydraphql";
+
+export async function Assets(queries: readonly NodeQuery[]) {
+  const ids = queries.map(query => query.ref);
+  const response = await fetch(
+    `https://api.coincap.io/v2/assets?ids=${ids.join(',')}&limit=${queries.length}`
+  );
+  const { data } = await response.json();
+
+  return data;
+}
+
+export async function Markets(queries: readonly NodeQuery[]) {
+  const responses = await Promise.all(queries
+    .map(query => query.ref)
+    .map(id => fetch(`https://api.coincap.io/v2/assets/${id}/markets`)));
+  const result = await Promise.all(responses.map(response => response.json()));
+
+  return result.map(({ data }) => data);
+}
+
+export async function Exchanges(queries: readonly NodeQuery[]) {
+  const responses = await Promise.all(queries
+    .map(query => query.ref)
+    .map(id => fetch(`https://api.coincap.io/v2/exchanges/${id}`)));
+  const result = await Promise.all(responses.map(response => response.json()));
+
+  return result.map(({ data }) => data);
+}
+```
+
+```typescript
+// src/application.ts
+import { createServer } from 'node:http';
+import { createHandler } from 'graphql-http';
+import { createGraphQLApp, createLoader } from "@frontside/hydraphql";
+import { MyModule } from "./modules/my-module/my-module";
+import { Assets, Markets, Exchanges } from "./loader";
+
+export async function main() {
+  const application = await createGraphQLApp({ modules: [MyModule] });
+  // NOTE: We are creating data loader with a few sources
+  const loader = createLoader({ Assets, Markets, Exchanges });
+
+  const server = createServer(
+    createHandler({
+      context: { loader },
+      schema: application.schema,
+      execute: application.createExecution(),
+    })
+  );
+
+  server.listen(4000, () => console.log(`🚀 Server ready at http://localhost:4000/`));
+}
+```
+
+In the last step we need to update our schema
+
+```graphql
+extend interface Node
+  @discriminates(with: "__source")
+  @discriminationAlias(value: "Assets", type: "Asset")
+  @discriminationAlias(value: "Markets", type: "Market")
+  @discriminationAlias(value: "Exchanges", type: "Exchange") {}
+
+type Asset @implements(interface: "Node") {
+  symbol: String! @field
+  name: String! @field
+  supply: String! @field
+  marketCapUsd: String! @field
+  volumeUsd24Hr: String! @field
+  priceUsd: String! @field
+  changePercent24Hr: String! @field
+  marketsList: [Market!]! @resolve(at: "id", from: "Markets")
+  markets: Connection @resolve(at: "id", nodeType: "Market", from: "Markets")
+}
+
+type Market @implements(interface: "Node") {
+  exchange: Exchange! @resolve(at: "exchangeId", from: "Exchanges")
+  asset: Asset! @resolve(at: "baseId", from: "Assets")
+  quoteId: String! @field
+  assetSymbol: String! @field(at: "baseSymbol")
+  quoteSymbol: String! @field
+  priceUsd: String! @field
+  volumeUsd24Hr: String! @field
+  volumePercent: String! @field
+}
+
+type Exchange @implements(interface: "Node") {
+  name: String! @field
+  rank: String! @field
+  percentTotalVolume: String! @field
+  volumeUsd: String! @field
+  tradingPairs: String! @field
+  socket: Boolean! @field
+  exchangeUrl: String! @field
+  updated: Int! @field
+}
+```
+
+Now we can fetch multiple assets at once and fetch more information about them:
+
+```graphql
+query {
+  nodes(ids: ["polkadot", "bitcoin", "ethereum"]) {
+    id
+    symbol
+    name
+    supply
+    marketCapUsd
+    volumeUsd24Hr
+    priceUsd
+    changePercent24Hr
+    markets(first: 5) {
+      id
+      exchange {
+        id
+        name
+        rank
+        percentTotalVolume
+        volumeUsd
+        tradingPairs
+        socket
+        exchangeUrl
+        updated
+      }
+      quoteId
+      assetSymbol
+      quoteSymbol
+      priceUsd
+      volumeUsd24Hr
+      volumePercent
+    }
+  }
+}
+```
+
+[graphql-modules]: https://the-guild.dev/graphql/modules/docs
+[playground]: https://studio.apollographql.com/sandbox/explorer
+[loader]: https://github.com/graphql/dataloader
+[server]: ./server

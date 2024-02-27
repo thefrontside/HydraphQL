@@ -1,0 +1,23 @@
+{
+  "Getting Started": [
+    ["introduction.mdx", "Introduction"],
+    ["quickstart.mdx", "Quick start"],
+    ["extending.mdx", "Extending schema"],
+    ["codegen.mdx", "GraphQL/TypeScript codegen"],
+    ["querying.mdx", "Querying GraphQL API"],
+    ["faq.mdx", "FAQ"]
+  ],
+  "Directives": [
+    ["field.mdx", "@field"],
+    ["implements.mdx", "@implements"],
+    ["discriminates.mdx", "@discriminates"],
+    ["resolve.mdx", "@resolve"],
+    ["relation.mdx", "@relation"]
+  ],
+  "Advanced": [
+    ["resolving.mdx", "Type/Field resolving"],
+    ["collections.mdx", "List and Connection types"],
+    ["hydraphql.mdx", "HydraphQL"],
+    ["server.mdx", "GraphQL Server"]
+  ]
+}
