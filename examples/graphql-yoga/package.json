@@ -5,7 +5,8 @@
   "packageManager": "yarn@3.6.3",
   "scripts": {
     "start": "node --loader tsx ./index.ts",
-    "preinstall": "cd ../../ && yarn pack"
+    "preinstall": "cd ../../ && yarn pack",
+    "generate:types": "graphql-codegen-esm"
   },
   "volta": {
     "extends": "../../package.json"
@@ -14,14 +15,22 @@
     "@envelop/core": "^4.0.3",
     "@envelop/dataloader": "^5.0.3",
     "@envelop/graphql-modules": "^5.0.3",
-    "@frontside/hydraphql": "^0.0.1",
+    "@frontside/hydraphql": "^0.1.0",
     "@graphql-tools/load-files": "^7.0.0",
+    "@graphql-tools/utils": "^10.0.0",
     "dataloader": "^2.2.2",
     "graphql": "^16.8.1",
     "graphql-modules": "^2.2.0",
     "graphql-yoga": "^4.0.4"
   },
   "devDependencies": {
+    "@graphql-codegen/add": "^5.0.0",
+    "@graphql-codegen/cli": "^4.0.0",
+    "@graphql-codegen/graphql-modules-preset": "^4.0.0",
+    "@graphql-codegen/plugin-helpers": "^5.0.0",
+    "@graphql-codegen/schema-ast": "^4.0.0",
+    "@graphql-codegen/typescript": "^4.0.0",
+    "@graphql-codegen/typescript-resolvers": "^4.0.0",
     "tsx": "^3.13.0"
   }
 }
