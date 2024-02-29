@@ -7,7 +7,11 @@ import {
   GraphQLInt,
   GraphQLString,
 } from "graphql";
-import type { DirectiveMapperAPI, ResolverContext } from "../types.js";
+import type {
+  DirectiveMapperAPI,
+  FieldResolver,
+  ResolverContext,
+} from "../types.js";
 import {
   createConnectionType,
   decodeId,
@@ -17,6 +21,7 @@ import {
   isNamedListType,
   unboxNamedType,
 } from "../helpers.js";
+import { HYDRAPHQL_EXTENSION } from "src/constants.js";
 
 export function resolveDirectiveMapper(
   fieldName: string,
@@ -73,15 +78,11 @@ export function resolveDirectiveMapper(
       before: { type: GraphQLString },
     };
 
-    field.resolve = async ({ id }, args, { loader }) => {
-      if (directive.at === "id") return { id };
-
-      const node = await loader.load(id);
-
+    const fieldResolver: FieldResolver = ({ id, entity }, args) => {
       const source =
         (directive.from as string | undefined) ?? decodeId(id).source;
       const typename = unboxNamedType(field.type).name;
-      const ref: unknown = _.get(node, directive.at as string | string[]);
+      const ref: unknown = _.get(entity, directive.at as string | string[]);
 
       if (directive.at) {
         if (!ref) {
@@ -112,17 +113,28 @@ export function resolveDirectiveMapper(
         count: ids.length,
       };
     };
-  } else {
-    field.resolve = async ({ id }, args, { loader }) => {
+
+    field.extensions = {
+      ...field.extensions,
+      [HYDRAPHQL_EXTENSION]: {
+        fieldResolver,
+      },
+    };
+    field.resolve = async ({ id }, args, context, info) => {
       if (directive.at === "id") return { id };
 
-      const node = await loader.load(id);
+      const { loader } = context;
+      const entity = await loader.load(id);
 
+      return fieldResolver({ id, entity }, args, context, info);
+    };
+  } else {
+    const fieldResolver: FieldResolver = ({ id, entity }, args) => {
       const source =
         (directive.from as string | undefined) ?? decodeId(id).source;
       const typename = unboxNamedType(field.type).name;
       const isListType = isNamedListType(field.type);
-      const ref: unknown = _.get(node, directive.at as string | string[]);
+      const ref: unknown = _.get(entity, directive.at as string | string[]);
 
       if (directive.at) {
         if (!ref) {
@@ -156,6 +168,21 @@ export function resolveDirectiveMapper(
               query: { ref: ref as string | undefined, args },
             }),
           };
+    };
+
+    field.extensions = {
+      ...field.extensions,
+      [HYDRAPHQL_EXTENSION]: {
+        fieldResolver,
+      },
+    };
+    field.resolve = async ({ id }, args, context, info) => {
+      if (directive.at === "id") return { id };
+
+      const { loader } = context;
+      const entity = await loader.load(id);
+
+      return fieldResolver({ id, entity }, args, context, info);
     };
   }
 }
