@@ -1,7 +1,8 @@
 import _ from "lodash";
 import type { GraphQLFieldConfig } from "graphql";
-import type { ResolverContext } from "../types.js";
+import type { FieldResolver, ResolverContext } from "../types.js";
 import { id } from "../helpers.js";
+import { HYDRAPHQL_EXTENSION } from "src/constants.js";
 
 export function fieldDirectiveMapper(
   fieldName: string,
@@ -22,22 +23,27 @@ export function fieldDirectiveMapper(
       `The "at" argument of @field directive must be a string or an array of strings`,
     );
   }
-  const fieldResolve = (field.resolve ?? id) as NonNullable<
-    GraphQLFieldConfig<
-      unknown,
-      ResolverContext,
-      Record<string, unknown> | undefined
-    >["resolve"]
-  >;
-  field.resolve = async ({ id }, args, context, info) => {
-    const { loader } = context;
-    const entity = await loader.load(id);
-    if (!entity) return null;
+  const resolve = (field.resolve ?? id) as FieldResolver<unknown>;
+
+  const fieldResolver: FieldResolver = ({ entity }, args, context, info) => {
     const source =
       (_.get(
         entity,
         (directive.at as undefined | string | string[]) ?? fieldName,
       ) as unknown) ?? directive.default;
-    return fieldResolve(source, args, context, info);
+    return resolve(source, args, context, info);
+  };
+
+  field.extensions = {
+    ...field.extensions,
+    [HYDRAPHQL_EXTENSION]: {
+      fieldResolver,
+    },
+  };
+  field.resolve = async ({ id }, args, context, info) => {
+    const { loader } = context;
+    const entity = await loader.load(id);
+    if (!entity) return null;
+    return fieldResolver({ id, entity }, args, context, info);
   };
 }

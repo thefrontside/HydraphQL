@@ -68,3 +68,15 @@ export interface GraphQLModule {
   postTransform?: (schema: GraphQLSchema) => GraphQLSchema;
   module: Module;
 }
+
+export type FieldResolver<T = { id: string; entity: unknown }> = NonNullable<
+  GraphQLFieldConfig<
+    T,
+    ResolverContext,
+    Record<string, unknown> | undefined
+  >["resolve"]
+>;
+
+export interface FieldExtensions {
+  fieldResolver: FieldResolver;
+}

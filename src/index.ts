@@ -13,4 +13,7 @@ export type {
   NodeQuery,
   NodeId,
   GraphQLModule,
+  FieldResolver,
+  FieldExtensions,
 } from "./types.js";
+export * from "./constants.js";
