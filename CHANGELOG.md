@@ -1,5 +1,11 @@
 # @frontside/hydraphql
 
+## 0.1.4
+
+### Patch Changes
+
+- c044e24: Add GraphQL field extension with field resolver function
+
 ## 0.1.3
 
 ### Patch Changes
