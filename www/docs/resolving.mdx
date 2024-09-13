@@ -1,8 +1,3 @@
-TODO: Describe how type resolving works in details
-TODO: Describe how field resolving works P+1 and late resolving
-TODO: How to combine with custom resolvers
-TODO: Resolving Connection type
-
 Let's start from that each node in HydraphQL has a unique `id` which contains
 encoded information about the type of the node, which data source use to fetch
 runtime data and also a reference to the data with optional query arguments.
@@ -35,7 +30,7 @@ article.
 So for a field with `@field` directive HydraphQL generates a resolver function like:
 
 ```typescript
-const customResolver = field.resolve;
+const userDefinedResolver = field.resolve;
 
 field.resolve = async (
   source: { id: string },
@@ -46,6 +41,32 @@ field.resolve = async (
   const { loader } = context;
   const node = await loader.load(source.id);
   const rawData = _.get(node, directive.at) ?? directive.default;
-  return customResolver(rawData, args, context, info);
+  return userDefinedResolver(rawData, args, context, info);
 }
 ```
+
+With `@resolve` directive it generates
+
+```typescript
+const userDefinedResolver = field.resolve;
+
+field.resolve = async (
+  source: { id: string },
+  args: any,
+  context: { loader: DataLoader },
+  info: GraphQLResolveInfo,
+): Promise<any> => {
+  const { loader } = context;
+  const node = await loader.load(source.id);
+  const ref = _.get(node, directive.at);
+
+  const source = directive.from ?? decodeId(id).source;
+  const typename = field.type.name;
+
+  return { id: encodeId({ source, typename, query: { ref, args } }) };
+}
+```
+
+Generated resolver for `@relation` directive is a special case of `@resolve` directive resolver.
+But instead of taking `source` and value from `form` path we take entity ref from `relations` array
+filtering by relation `name` and targetRef `kind`

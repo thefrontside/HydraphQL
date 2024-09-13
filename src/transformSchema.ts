@@ -1,18 +1,20 @@
-import { Kind } from "graphql";
-import type { DocumentNode } from "graphql";
 import { makeExecutableSchema } from "@graphql-tools/schema";
-import { validateSchema } from "graphql";
+import type { DocumentNode } from "graphql";
+import { Kind, validateSchema } from "graphql";
 import type { Module, Resolvers } from "graphql-modules";
+import { CoreSync } from "./index.js";
+import { loadSchemaSync } from "./loadSchema.js";
 import { mapDirectives } from "./mapDirectives.js";
 import type { FieldDirectiveMapper, GraphQLModule } from "./types.js";
-import { CoreSync } from "./index.js";
 
 export function transformSchema(
-  additionalModules: (GraphQLModule | Module)[] = [],
+  additionalModules: (GraphQLModule | Module | string)[] = [],
   { generateOpaqueTypes }: { generateOpaqueTypes?: boolean } = {},
 ) {
   const postTransformers: GraphQLModule["postTransform"][] = [];
-  const modules = [CoreSync(), ...additionalModules];
+  const modules = [CoreSync(), ...additionalModules].flatMap((m) =>
+    typeof m === "string" ? loadSchemaSync(m) : m,
+  );
   const directiveMappers: Record<string, FieldDirectiveMapper> = {};
   const typeDefs: DocumentNode[] = modules.flatMap((m) => {
     const {

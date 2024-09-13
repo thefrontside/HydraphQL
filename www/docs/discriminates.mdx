@@ -88,28 +88,27 @@ option. With that option HydraphQL will generate opaque types for all interfaces
 const application = await createApplication({ generateOpaqueTypes: true });
 ```
 
-### `@discriminationAlias`
+### Discrimination aliases
 
 By default value from `with` argument is used to find a type as-is or converted
 to PascalCase. And it's fairly enough for most cases. But sometimes you need to
-match the value with a type that has a different name. In this case, you can use
-`@discriminationAlias` directive.
+match the value with a type that has a different name. In this case, you can define
+`aliases` argument.
 
 ```graphql
 interface API
   @implements(interface: "Node")
-  @discriminates(with: "spec.type")
-  @discriminationAlias(from: "openapi", to: "OpenAPI") {
+  @discriminates(with: "spec.type", aliases: [{ from: "grpc", to: "GrpcAPI" }]) {
     # ...
   }
 
-type OpenAPI @implements(interface: "API") {
+type GrpcAPI @implements(interface: "API") {
   # ...
 }
 ```
 
-This means, when `spec.type` equals to `openapi`, the `API` interface will be
-resolved to `OpenAPI` type.
+This means, when `spec.type` equals to `gprc`, the `API` interface will be
+resolved to `GrpcAPI` type.
 
 ### Using `@discriminates` with multiple data sources
 
@@ -128,9 +127,13 @@ const loader = createLoader({
 
 ```graphql
 extend interface Node
-  @discriminates(with: "__source")
-  @discriminationAlias(value: "MyApi", type: "MyApiNode")
-  @discriminationAlias(value: "AnotherApi", type: "AnotherApiNode") {}
+  @discriminates(
+    with: "__source",
+    aliases: [
+      { value: "MyApi", type: "MyApiNode" },
+      { value: "AnotherApi", type: "AnotherApiNode" }
+    ]
+  ) {}
 
 type MyApiNode @implements(interface: "Node") {
   # ...

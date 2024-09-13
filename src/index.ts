@@ -2,6 +2,7 @@ export * from "./createLoader.js";
 export * from "./createGraphQLApp.js";
 export * from "./core/core.js";
 export * from "./helpers.js";
+export * from "./loadSchema.js";
 export { transformSchema } from "./transformSchema.js";
 export type {
   GraphQLContext,

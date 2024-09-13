@@ -80,3 +80,9 @@ export type FieldResolver<T = { id: string; entity: unknown }> = NonNullable<
 export interface FieldExtensions {
   fieldResolver: FieldResolver;
 }
+
+export interface DiscriminationArgs {
+  with?: string | string[];
+  opaqueType?: string;
+  aliases?: { value: string; type: string }[];
+}

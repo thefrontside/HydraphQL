@@ -1,17 +1,13 @@
-import _ from "lodash";
-import { connectionFromArray, ConnectionArguments } from "graphql-relay";
 import {
   GraphQLInputObjectType,
-  type GraphQLFieldConfig,
-  type GraphQLInterfaceType,
   GraphQLInt,
   GraphQLString,
+  type GraphQLFieldConfig,
+  type GraphQLInterfaceType,
 } from "graphql";
-import type {
-  DirectiveMapperAPI,
-  FieldResolver,
-  ResolverContext,
-} from "../types.js";
+import { ConnectionArguments, connectionFromArray } from "graphql-relay";
+import _ from "lodash";
+import { HYDRAPHQL_EXTENSION } from "src/constants.js";
 import {
   createConnectionType,
   decodeId,
@@ -21,7 +17,11 @@ import {
   isNamedListType,
   unboxNamedType,
 } from "../helpers.js";
-import { HYDRAPHQL_EXTENSION } from "src/constants.js";
+import type {
+  DirectiveMapperAPI,
+  FieldResolver,
+  ResolverContext,
+} from "../types.js";
 
 export function resolveDirectiveMapper(
   fieldName: string,
@@ -97,6 +97,11 @@ export function resolveDirectiveMapper(
         }
       }
 
+      // FIXME: This doesn't work if a single ref is resolved to multiple nodes
+      // We need to load all nodes
+      // So here we might have a single connection or array of connections
+      // TODO Throw an error if we have an array of refs and a single connection
+      // TODO Throw an error if we have a single ref and an array of connections
       const ids = ((ref ?? []) as string[]).map((r) => ({
         id: encodeId({
           source,
@@ -108,6 +113,7 @@ export function resolveDirectiveMapper(
         }),
       }));
 
+      // FIXME: We need to apply connection
       return {
         ...connectionFromArray(ids, args as ConnectionArguments),
         count: ids.length,
@@ -176,6 +182,7 @@ export function resolveDirectiveMapper(
         fieldResolver,
       },
     };
+    // TODO Add test case of handling [Connection] type (array of connections)
     field.resolve = async ({ id }, args, context, info) => {
       if (directive.at === "id") return { id };
 

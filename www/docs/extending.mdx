@@ -39,13 +39,12 @@ The GraphQL API provides 2 syntaxes for defining edges:
 
 Use one-to-one syntax when a node is related to only one node. For example,
 a component can have only one owner is expressed in the following way. For more
-information checkout [`@resolve`][resolve], There is also [`@relation`][relation] directive
-implemented in the [Backstage Catalog GraphQL plugin][catalog-module] that resolves nodes
-with slightly different way.
+information checkout [`@relation`][relation], There is also [`@resolve`][resolve] directive
+that could be used for resolving nodes from 3rd party data sources.
 
 ```graphql
 type Component {
-  owner: User @resolve(at: "ownerId")
+  owner: User @relation(name: "ownedBy")
 }
 ```
 
@@ -59,11 +58,11 @@ section for more information.
 
 ```graphql
 type Component {
-  modules: [Module!] @resolve(at: "modules")
+  modules: [Module!] @relation(name: "modulesOf")
 }
 
 type Group {
-  members: Connection @resolve(at: "members", from: "UserAPI")
+  members: Connection @relation(name: "hasMember", nodeType: "User")
 }
 ```
 
@@ -249,9 +248,13 @@ server.listen(4000, () => {
 
 ```graphql
 extend interface Node
-  @discriminates(with: "__source")
-  @discriminationAlias(value: "MyApi", type: "MyApiNode")
-  @discriminationAlias(value: "Catalog", type: "Entity")
+  @discriminates(
+    with: "__source",
+    aliases: [
+      { value: "MyApi", type: "MyApiNode" },
+      { value: "Catalog", type: "Entity" }
+    ]
+  )
 
 type Entity @implements(interface: "Node") {
   title: String @field(at: "metadata.title")

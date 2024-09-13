@@ -62,10 +62,14 @@ describe("mapDirectives", () => {
     const schema = transform(gql`
       interface Entity
         @implements(interface: "Node")
-        @discriminates(with: "kind")
-        @discriminationAlias(value: "component", type: "Component")
-        @discriminationAlias(value: "template", type: "Template")
-        @discriminationAlias(value: "location", type: "Location") {
+        @discriminates(
+          with: "kind"
+          aliases: [
+            { value: "component", type: "Component" }
+            { value: "template", type: "Template" }
+            { value: "location", type: "Location" }
+          ]
+        ) {
         totalCount: Int!
       }
 
@@ -390,14 +394,18 @@ describe("mapDirectives", () => {
     );
   });
 
-  void test(`should fail if @discriminationAlias has ambiguous types`, () => {
+  void test(`should fail if discrimination aliases have ambiguous types`, () => {
     expect(() =>
       transform(gql`
         interface Entity
           @implements(interface: "Node")
-          @discriminates(with: "kind")
-          @discriminationAlias(value: "component", type: "EntityComponent")
-          @discriminationAlias(value: "component", type: "Component") {
+          @discriminates(
+            with: "kind"
+            aliases: [
+              { value: "component", type: "EntityComponent" }
+              { value: "component", type: "Component" }
+            ]
+          ) {
           name: String!
         }
 
@@ -411,20 +419,6 @@ describe("mapDirectives", () => {
       `),
     ).toThrow(
       `The following discrimination aliases are ambiguous: "component" => "EntityComponent" | "Component"`,
-    );
-  });
-
-  void test(`should fail if @discriminationAlias is used without @discriminates`, () => {
-    expect(() =>
-      transform(gql`
-        interface Entity
-          @implements(interface: "Node")
-          @discriminationAlias(value: "component", type: "EntityComponent") {
-          name: String!
-        }
-      `),
-    ).toThrow(
-      `The "Entity" interface has @discriminationAlias directive but doesn't have @discriminates directive`,
     );
   });
 
@@ -565,9 +559,11 @@ describe("mapDirectives", () => {
     expect(() =>
       transform(gql`
         interface Entity
-          @discriminates(with: "kind")
-          @implements(interface: "Node")
-          @discriminationAlias(value: "component", type: "Component") {
+          @discriminates(
+            with: "kind"
+            aliases: [{ value: "component", type: "Component" }]
+          )
+          @implements(interface: "Node") {
           name: String!
         }
         type Resource @implements(interface: "Entity") {
@@ -580,7 +576,7 @@ describe("mapDirectives", () => {
         }
       `),
     ).toThrow(
-      'Type(-s) "Component" in `interface Entity @discriminationAlias(value: ..., type: ...)` must implement "Entity" interface by using @implements directive',
+      'Type(-s) "Component" in `interface Entity @discriminates(aliases: [...])` must implement "Entity" interface by using @implements directive',
     );
   });
 
@@ -895,9 +891,13 @@ describe("mapDirectives", () => {
       id: "test",
       typeDefs: gql`
         interface Node
-          @discriminates(with: "__source")
-          @discriminationAlias(value: "Mock", type: "Entity")
-          @discriminationAlias(value: "GraphQL", type: "GraphQLEntity")
+          @discriminates(
+            with: "__source"
+            aliases: [
+              { value: "Mock", type: "Entity" }
+              { value: "GraphQL", type: "GraphQLEntity" }
+            ]
+          )
 
         type Entity @implements(interface: "Node") {
           parent: GraphQLEntity @resolve(at: "spec.parentId", from: "GraphQL")
@@ -965,9 +965,13 @@ describe("mapDirectives", () => {
       id: "test",
       typeDefs: gql`
         interface Node
-          @discriminates(with: "__source")
-          @discriminationAlias(value: "Mock", type: "Entity")
-          @discriminationAlias(value: "Tasks", type: "TaskProperty")
+          @discriminates(
+            with: "__source"
+            aliases: [
+              { value: "Mock", type: "Entity" }
+              { value: "Tasks", type: "TaskProperty" }
+            ]
+          )
 
         type Entity @implements(interface: "Node") {
           property(name: String!): TaskProperty
@@ -1051,9 +1055,13 @@ describe("mapDirectives", () => {
       id: "test",
       typeDefs: gql`
         interface Node
-          @discriminates(with: "__source")
-          @discriminationAlias(value: "Mock", type: "Entity")
-          @discriminationAlias(value: "Tasks", type: "Task")
+          @discriminates(
+            with: "__source"
+            aliases: [
+              { value: "Mock", type: "Entity" }
+              { value: "Tasks", type: "Task" }
+            ]
+          )
 
         type Entity @implements(interface: "Node") {
           task(taskId: ID!): Task @resolve(from: "Tasks")
@@ -1202,8 +1210,10 @@ describe("mapDirectives", () => {
       typeDefs: gql`
         interface Entity
           @implements(interface: "Node")
-          @discriminates(with: "kind")
-          @discriminationAlias(value: "User", type: "Employee") {
+          @discriminates(
+            with: "kind"
+            aliases: [{ value: "User", type: "Employee" }]
+          ) {
           name: String! @field(at: "name")
         }
 

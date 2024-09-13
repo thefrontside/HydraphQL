@@ -1,0 +1,408 @@
+The [Backstage GraphQL plugin][graphql-backend] is designed for schema-first
+development of the GraphQL API. It reduces work necessary to expand the schema
+using schema directives. [Schema directives](https://the-guild.dev/graphql/tools/docs/schema-directives)
+are extensions to GraphQL schema used to automate implementation of the GraphQL API.
+In Backstage GraphQL Plugin, schema directives are used to automatically create
+resolvers and reduce code duplication. [Resolvers](https://graphql.org/learn/execution/)
+tell a GraphQL API how to provide data for a specific schema type or field.
+The Backstage GraphQL Plugin uses what it knows about the Backstage catalog to
+reduce the need for writing resolvers that call the catalog.
+
+### Getting started
+
+To start using the Backstage GraphQL plugin, you need to install the plugin itself
+and the Catalog module.
+
+```bash
+yarn workspace backend add \
+  @frontside/backstage-plugin-graphql-backend \
+  @frontside/backstage-plugin-graphql-backend-module-catalog
+```
+
+Then you need to add it them to your backend. Currently, Backstage implemented two
+backend systems:
+
+- [Backstage backend system](https://backstage.io/docs/backend-system/)
+- [Old Backstage plugins API](https://backstage.io/docs/plugins/backend-plugin)
+
+### Usage with Backstage backend system
+
+Adding GraphQL plugin to your Backstage backend is pretty straightforward.
+
+```typescript
+// packages/backend/src/index.ts
+import { graphqlPlugin } from '@frontside/backstage-plugin-graphql-backend'
+import { graphqlModuleCatalog } from '@frontside/backstage-plugin-graphql-backend-module-catalog'
+
+// Initializing Backstage backend
+const backend = createBackend()
+
+// Adding GraphQL plugin
+backend.use(graphqlPlugin())
+// Adding Catalog module
+backend.use(graphqlModuleCatalog())
+```
+
+The GraphQL plugin starts [Yoga](https://the-guild.dev/graphql/yoga-server)
+a full-featured GraphQL server which adds a new `/api/graphql` endpoint.
+And the Catalog module extends the Core GraphQL schema with basic Catalog types
+and Catalog Data Loader.
+
+If you'd like to extend the GraphQL schema with your own types, you can use
+`graphqlModuleRelationResolver` module instead of `graphqlModuleCatalog`.
+
+```typescript
+// packages/backend/src/index.ts
+import { graphqlModuleRelationResolver } from '@frontside/backstage-plugin-graphql-backend-module-catalog'
+
+// ...
+
+backend.use(graphqlModuleRelationResolver())
+```
+
+The only difference between those two modules is that `graphqlModuleRelationResolver`
+doesn't extend the GraphQL schema with additional types. It only adds `@relation`
+directive and Catalog Data Loader.
+
+### Usage with old Backstage backend plugins API
+
+If you haven't migrated to the new Backstage backend system yet, you can still
+use the GraphQL plugin, but you need to do a little bit more work. As usual,
+you need to declare `createPlugin` function where you can initialize GraphQL Plugin.
+So `@frontside/backstage-plugin-graphql-backend` provides `createRouter` function
+to initialize `/api/graphql` endpoint handler. Additionally you need to pass
+`Catalog` GraphQL module and create Catalog Data Loader.
+
+```typescript
+// packages/backend/src/plugins/graphql.ts
+import { createRouter } from '@frontside/backstage-plugin-graphql-backend'
+import { Catalog, createCatalogLoader } from '@frontside/backstage-plugin-graphql-backend-module-catalog'
+
+export default async function createPlugin(
+  env: PluginEnvironment,
+): Promise<Router> {
+  return await createRouter({
+    logger: env.logger,
+    modules: [Catalog],
+    loaders: { ...createCatalogLoader(env.catalogClient) },
+  })
+}
+```
+
+Then you need to add this plugin to your backend.
+
+```typescript
+// packages/backend/src/index.ts
+import { createPlugin } from './plugins/graphql'
+
+// ...
+
+async function main() {
+  // ...
+
+  const graphqlEnv = useHotMemoize(module, () => createEnv('graphql'))
+  apiRouter.use('/graphql', await graphql(graphqlEnv))
+
+  // ...
+}
+```
+
+As well as with the new backend system if you don't want to use predefined Catalog
+types. You can pass `Relation` GraphQL module instead of `Catalog`.
+
+### GraphQL Playground (GraphiQL)
+
+After you've added GraphQL plugin to your backend, you can install
+[Backstage GraphiQL plugin](https://github.com/backstage/backstage/tree/master/plugins/graphiql#readme)
+The same plugin is installed in [Backstage Demo](http://demo.backstage.io/graphiql).
+It allows you to play around with GraphQL API and explore the schema.
+
+```bash
+yarn workspace app add @backstage/plugin-graphiql
+```
+
+After you installed it, you need to add `/graphiql` route to your app.
+
+```diff
+# packages/app/src/App.tsx
++import { GraphiQLPage } from '@backstage/plugin-graphiql'
+
+ const routes = (
+   <FlatRoutes>
++    <Route path="/graphiql" element={<GraphiQLPage />} />
+   </FlatRoutes>
+ )
+```
+
+Then add the GraphQL endpoint to GraphQLBrowse API.
+
+```typescript
+// packages/app/src/apis.ts
+import { createApiFactory, discoveryApiRef }from '@backstage/core-plugin-api'
+import { graphQlBrowseApiRef, GraphQLEndpoints } from '@backstage/plugin-graphiql'
+
+export const apis = [
+  createApiFactory({
+    api: graphQlBrowseApiRef,
+    deps: { discovery: discoveryApiRef },
+    factory: ({ discovery }) =>
+      GraphQLEndpoints.from([
+        GraphQLEndpoints.create({
+          id: 'catalog',
+          title: 'Catalog',
+          fetcher: async (params: any) => {
+            const graphqlURL = await discovery.getBaseUrl('graphql')
+            return fetch(graphqlURL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(params),
+            }).then(res => res.json())
+          },
+        })
+      ]),
+  }),
+]
+```
+
+Now you can start your app and open `http://localhost:3000/graphiql` to explore
+the GraphQL API.
+
+### Frontend GraphQL client
+
+And here we come to the most interesting part. How to use GraphQL API from the
+frontend. There are a few popular GraphQL clients:
+
+- [`graphql-request`](https://github.com/jasonkuhrt/graphql-request) - Minimal
+GraphQL client supporting Node and browsers for scripts or simple apps.
+- [`Apollo Client`](https://github.com/apollographql/apollo-client) - A fully-featured,
+production ready caching GraphQL client for every UI framework and GraphQL server.
+- [`urql`](https://github.com/urql-graphql/urql) - the highly customizable and
+versatile GraphQL client with which you add on features like normalized caching
+as you grow.
+- [`Relay`](https://github.com/facebook/relay) - is a JavaScript framework for
+building data-driven React applications.
+- [`graphql-hooks`](https://github.com/nearform/graphql-hooks) - Minimal hooks-first
+GraphQL client.
+
+We recommend start with `graphql-request` and then with increasing requirements and
+complexity move to more powerful clients.
+
+```bash
+yarn workspace app add graphql graphql-request
+```
+
+To start using it you need to define a new API through `createApiFactory` function.
+
+```typescript
+// packages/app/src/apis.ts
+import { GraphQLClient } from 'graphql-request'
+import { createApiRef, createApiFactory, configApiRef }from '@backstage/core-plugin-api'
+
+export const graphqlApiRef = createApiRef<GraphQLClient>({
+  id: 'plugin.graphql.service',
+})
+
+export const apis = [
+  // ...
+  createApiFactory({
+    api: graphqlApiRef,
+    deps: { configApi: configApiRef },
+    factory: ({ configApi }) => {
+      // NOTE: `discoveryApi.getBaseUrl` returns a promise which can't be used in this function
+      const graphqlURL = `${configApi.getString('backend.baseUrl')}/api/graphql`
+      return new GraphQLClient(graphqlURL)
+    }
+  }),
+]
+```
+
+Then you can use it in your components.
+
+```tsx
+// packages/app/src/components/MyComponent.tsx
+import { useQuery } from '@tanstack/react-query'
+import { gql } from 'graphql-request'
+import { useApi } from '@backstage/core-plugin-api'
+import { parseEntityRef } from '@backstage/catalog-model'
+import { graphqlApiRef } from '../apis'
+
+const query = gql`
+  query getEntity($kind: String!, $name: String!, $namespace: String) {
+    entity(name: $name, kind: $kind, namespace: $namespace) {
+      # ...
+    }
+  }
+`
+
+export const MyComponent = ({ entityRef }) => {
+  const graphqlClient = useApi(graphqlApiRef)
+
+  const { isPending, isError, data: { entity }, error } = useQuery({
+    queryKey: ['entity', entityRef],
+    queryFn: () => graphqlClient.request(query, parseEntityRef(entityRef)),
+  })
+
+  return (
+    <div>
+      {isPending && /* Loading state */}
+      {isError && /* Error message */}
+      {entity && /* Render entity */}
+    </div>
+  )
+}
+```
+
+`graphql-request` is pretty straightforward and easy to use. But it lacks some useful
+features or requires additional work to use them. For example, caching or
+fragments batching. So if you need more features you can switch to more powerful
+clients like `urql` or `graphql-hooks`. More advanced techniques is covered in
+[querying] section.
+
+### Backend GraphQL client
+
+For making GraphQL requests from the backend you can use `graphql-request` as well.
+But it's not the best option. The much better is to use [`@graphql-codegen`][codegen]
+to generate well-typed GraphQL client by using GraphQL schema.
+
+At first you need to install a few packages.
+
+```bash
+yarn workspace backend add \
+  @graphql-codegen/cli \
+  @graphql-codegen/typescript \
+  @graphql-codegen/typescript-operations \
+  @graphql-codegen/typescript-graphql-request
+```
+
+Then you need to create `schema.ts` file for GraphQL schema.
+
+```typescript
+// ./packages/backend/src/schema.ts
+import { transformSchema } from "@frontside/hydraphql"
+import { printSchemaWithDirectives } from "@graphql-tools/utils"
+import { Catalog } from '@frontside/backstage-plugin-graphql-backend-module-catalog'
+
+export const schema = printSchemaWithDirectives(
+  transformSchema([Catalog()])
+)
+```
+
+After that you can create `codegen.ts` config file.
+
+```typescript
+import type { CodegenConfig } from "@graphql-codegen/cli"
+import { schema } from "./src/schema"
+
+const config: CodegenConfig = {
+  schema,
+  generates: {
+    "./src/client.ts": {
+      plugins: [
+        "typescript",
+        "typescript-operations",
+        "typescript-graphql-request",
+      ],
+    },
+  },
+}
+
+export default config;
+```
+
+And finally run codegen to generate GraphQL client.
+
+```bash
+yarn workspace backend run graphql-codegen --config codegen.ts
+```
+
+Usage of the generated client is pretty straightforward.
+
+```typescript
+import { GraphQLClient } from 'graphql-request'
+import { getSdk } from './client'
+
+const graphqlClient = new GraphQLClient('http://localhost:7000/api/graphql')
+const sdk = getSdk(graphqlClient)
+
+const { entity } = await sdk.entity({
+  kind: 'Component',
+  name: 'backstage',
+})
+```
+
+### GraphQL Code Generation
+
+In the previous part we've already used GraphQL Code Generation to generate
+GraphQL client for Backstage Backend. But it's not the only thing you can do
+with it. You can generate TypeScript types for GraphQL schema and even customize
+it with your own codegen plugins to process the schema whatever you like.
+
+Let's start with explaining what `./packages/backend/src/schema.ts` file is.
+Because Backstage GraphQL Plugin has modular architecture and GraphQL schema
+uses different GraphQL directives to enhance the schema. So it's not possible
+to use schema directly without post-processing to unwind all directives. It
+happens in runtime when you start the backend. And for codegen we need to get
+the same schema. So we use `transformSchema` function from `@frontside/hydraphql`
+which is the core package of Backstage GraphQL Plugin.
+
+With `@graphql-tools/schema` you can get GraphQL schema of your backend.
+
+```typescript
+const config: CodegenConfig = {
+  /* ... */
+  generates: {
+    "./__generated__/schema.graphql": {
+      plugins: ["schema-ast"],
+    },
+  },
+}
+```
+
+And with `@graphql-codegen/client-preset` you can generate typed queries for
+your frontend.
+
+```typescript
+const config: CodegenConfig = {
+  schema: '../backend/__generated__/schema.graphql',
+  documents: ['src/**/*.tsx'],
+  ignoreNoDocuments: true, // for better experience with the watcher
+  generates: {
+    './src/gql/': { preset: 'client' },
+  },
+}
+```
+
+And then use it in your components.
+
+```tsx
+// packages/app/src/components/MyComponent.tsx
+import { graphql } from '../gql'
+
+const query = graphql(/* GraphQL */`
+  query getEntity($kind: String!, $name: String!, $namespace: String) {
+    entity(name: $name, kind: $kind, namespace: $namespace) {
+      # ...
+    }
+  }
+`)
+
+export const MyComponent = ({ entityRef }) => {
+  const graphqlClient = useApi(graphqlApiRef);
+
+  // NOTE: `entity` is typed
+  const { isPending, isError, data: { entity }, error } = useQuery({
+    queryKey: ['entity', entityRef],
+    queryFn: () => graphqlClient.request(query, parseEntityRef(entityRef)),
+  })
+
+  /* ... */
+}
+```
+
+[graphql-backend]: https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend
+[catalog-module]: https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend-module-catalog
+[catalog-schema]: https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend-module-catalog/src/catalog
+[relation-schema]: https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend-module-catalog/src/relation
+[codegen]: https://the-guild.dev/graphql/codegen
+[extending]: ./extending
+[querying]: ./querying

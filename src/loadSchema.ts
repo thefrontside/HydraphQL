@@ -1,17 +1,19 @@
 import { CodeFileLoader } from "@graphql-tools/code-file-loader";
 import { GraphQLFileLoader } from "@graphql-tools/graphql-file-loader";
-import { loadTypedefs } from "@graphql-tools/load";
+import { loadTypedefs, loadTypedefsSync } from "@graphql-tools/load";
 import {
   getResolversFromSchema,
   printSchemaWithDirectives,
+  Source,
 } from "@graphql-tools/utils";
 import { createModule, gql } from "graphql-modules";
 
-export async function loadSchema(schema: string | string[]) {
-  const sources = await loadTypedefs(schema, {
-    sort: true,
-    loaders: [new CodeFileLoader(), new GraphQLFileLoader()],
-  });
+const loadTypeDefsOptions = {
+  sort: true,
+  loaders: [new CodeFileLoader(), new GraphQLFileLoader()],
+};
+
+function sources2modules(sources: Source[]) {
   return sources.map((source, index) =>
     createModule({
       id: source.location ?? `unknown_${index}`,
@@ -23,4 +25,12 @@ export async function loadSchema(schema: string | string[]) {
         : undefined,
     }),
   );
+}
+
+export async function loadSchema(schema: string | string[]) {
+  return sources2modules(await loadTypedefs(schema, loadTypeDefsOptions));
+}
+
+export function loadSchemaSync(schema: string | string[]) {
+  return sources2modules(loadTypedefsSync(schema, loadTypeDefsOptions));
 }

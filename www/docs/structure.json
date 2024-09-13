@@ -1,10 +1,9 @@
 {
   "Getting Started": [
-    ["introduction.mdx", "Introduction"],
-    ["quickstart.mdx", "Quick start"],
+    ["installation.mdx", "Installation"],
     ["extending.mdx", "Extending schema"],
-    ["codegen.mdx", "GraphQL/TypeScript codegen"],
     ["querying.mdx", "Querying GraphQL API"],
+    ["why.mdx", "Why GraphQL?"],
     ["faq.mdx", "FAQ"]
   ],
   "Directives": [
@@ -16,7 +15,6 @@
   ],
   "Advanced": [
     ["resolving.mdx", "Type/Field resolving"],
-    ["collections.mdx", "List and Connection types"],
     ["hydraphql.mdx", "HydraphQL"],
     ["server.mdx", "GraphQL Server"]
   ]

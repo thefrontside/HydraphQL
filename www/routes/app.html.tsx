@@ -111,7 +111,7 @@ export function* useAppHtml({
           </div>
         </header>
         <main>{children}</main>
-        <footer class="grid grid-cols-3 text-center text-gray-500 tracking-wide bg-gray-100 py-10 gap-y-4 leading-10">
+        <footer class="grid grid-cols-3 text-center text-gray-500 tracking-wide bg-gray-100 py-8 gap-y-4 leading-8">
           <section class="flex flex-col gap-y-1">
             <h1 class="text-sm uppercase font-bold text-blue-primary mb-4">
               About

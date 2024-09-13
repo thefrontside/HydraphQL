@@ -5,7 +5,11 @@ directive @field(
 directive @discriminates(
   with: _DirectiveArgument_
   opaqueType: String
+  aliases: [DiscriminationAlias!]
 ) on INTERFACE
+"""
+@deprecated Please use `@discriminates(aliases: [...])`
+"""
 directive @discriminationAlias(
   value: String!
   type: String!
@@ -14,6 +18,11 @@ directive @implements(interface: String!) on OBJECT | INTERFACE
 directive @resolve(at: _DirectiveArgument_, nodeType: String, from: String) on FIELD_DEFINITION
 
 scalar _DirectiveArgument_
+
+input DiscriminationAlias {
+  value: String!
+  type: String!
+}
 
 interface Node {
   id: ID!

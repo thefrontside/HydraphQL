@@ -269,10 +269,14 @@ In the last step we need to update our schema
 
 ```graphql
 extend interface Node
-  @discriminates(with: "__source")
-  @discriminationAlias(value: "Assets", type: "Asset")
-  @discriminationAlias(value: "Markets", type: "Market")
-  @discriminationAlias(value: "Exchanges", type: "Exchange") {}
+  @discriminates(
+    with: "__source",
+    aliases: [
+      { value: "Assets", type: "Asset" },
+      { value: "Markets", type: "Market" },
+      { value: "Exchanges", type: "Exchange" }
+    ]
+  ) {}
 
 type Asset @implements(interface: "Node") {
   symbol: String! @field

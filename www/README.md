@@ -1,4 +1,4 @@
-## Effection Website
+## HydraphQL Website
 
 ### Development
 

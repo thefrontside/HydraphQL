@@ -1,17 +1,115 @@
-## Frontend Development
+In [installation] we briefly covered how to query the GraphQL API from the frontend.
+Here you can learn more about GraphQL queries and fragments.
+
+### Using urql for GraphQL queries
+
+[`urql`](https://formidable.com/open-source/urql/docs/) is more advanced GraphQL
+client than `graphql-request` but at the same time is more powerful and flexible.
+There is nice [article](https://the-guild.dev/blog/unleash-the-power-of-fragments-with-graphql-codegen)
+that covered how to use `urql` with `graphql-codegen`.
+
+Let's start with installing required packages:
+
+```bash
+yarn workspace backend add \
+  urql \
+  @graphql-codegen/cli \
+  @graphql-codegen/client-preset
+```
+
+Then you need to create `codegen.ts` file. You can notice that in `schema` field
+is used GraphQL schema which should be generated in the backend package by using
+`@graphql-codegen/schema-ast` plugin.
+
+```typescript
+// ./packages/app/codegen.ts
+import type { CodegenConfig } from "@graphql-codegen/cli"
+
+const config: CodegenConfig = {
+  schema: '../backend/__generated__/schema.graphql',
+  documents: ['src/**/*.tsx?'],
+  ignoreNoDocuments: true, // for better experience with the watcher
+  generates: {
+    './src/gql/': { preset: 'client' },
+  },
+}
+```
+
+Now you can add `codegen` script to the `package.json` file:
+
+```json
+// ./packages/app/package.json
+{
+  "scripts": {
+    "codegen": "graphql-codegen --config codegen.ts"
+  }
+}
+```
+
+Right now since you haven't written any GraphQL queries the `codegen` script
+generates mostly useless files. But before starting writing queries you need to
+initialize `urql` client. The initiating process is the same as described in
+[installation] section.
+
+```typescript
+// packages/app/src/apis.ts
+import { Client, cacheExchange, fetchExchange } from 'urql'
+import { createApiRef, createApiFactory, configApiRef }from '@backstage/core-plugin-api'
+
+export const graphqlApiRef = createApiRef<GraphQLClient>({
+  id: 'plugin.graphql.service',
+})
+
+export const apis = [
+  // ...
+  createApiFactory({
+    api: graphqlApiRef,
+    deps: { configApi: configApiRef },
+    factory: ({ configApi }) => {
+      // NOTE: `discoveryApi.getBaseUrl` returns a promise which can't be used in this function
+      const graphqlURL = `${configApi.getString('backend.baseUrl')}/api/graphql`
+      return new Client({
+        url: graphqlURL,
+        exchanges: [cacheExchange, fetchExchange],
+      })
+    }
+  }),
+]
+```
+
+Then you need to create a provider component with `urql` client and wrap your
+application with it.
+
+```tsx
+// ./packages/app/src/App.tsx
+import { Provider } from 'urql'
+import { apis } from './apis'
+
+const GraphQLProvider = ({ children }) => {
+  const graphqlClient = useApi(graphqlApiRef)
+  return (
+    <Provider value={graphqlClient}>
+      {children}
+    </Provider>
+  )
+}
+
+// ...
+
+export default app.createRoot(
+  <GraphQLProvider>
+   {/* ... */}
+  </GraphQLProvider>,
+)
+```
+
+Finally you can start writing queries.
 
 ### How to query the GraphQL API?
 
-We provide a `useGraphQL` hook that you can use to send queries and mutations to the GraphQL API.
-
-The `useGraphQL` hook takes two arguments:
-
-1. operation - which can be query or a mutation
-2. variables - data that is passed to the query
-
 ```tsx
-import { graphql } from '../../../../__generated__';
-import { useGraphQL } from '../../../../hooks';
+import { useQuery } from 'urql';
+import { graphql } from './gql';
 
 const MyComponentQuery = graphql(/* GraphQL */ `
   query MyComponent($kind: String!, $name: String!, $namespace: String) {
@@ -26,11 +124,15 @@ const MyComponentQuery = graphql(/* GraphQL */ `
 `);
 
 export function MyComponent() {
-  const { isLoading, error, data } = useGraphQL(MyComponentQuery, {
-    kind: 'Component',
-    name: 'my-component',
-    namespace: 'default',
+  const [result] = useQuery({
+    query: MyComponentQuery,
+    variables: {
+      kind: 'Component',
+      name: 'my-component',
+      namespace: 'default',
+    }
   });
+  const { data, fetching, error } = result
 
   return data?.entity?.__typename === 'Component' ? data.entity.name : null;
 }
@@ -38,15 +140,13 @@ export function MyComponent() {
 
 There are a few important pieces here,
 
-1. `useGraphQL` hook expects that your operation will have a name, e.g. our example uses `query MyComponent(...)` instead of `query(...)`. It doesn't support anonymous operations to allow us to automatically handle caching. Note that global queries need to be globally unique.
+1. `useQuery` hook expects that your query will have a name, e.g. our example uses `query MyComponent(...)` instead of `query(...)`. It doesn't support anonymous operations to allow us to automatically handle caching. Note that global queries need to be globally unique.
 2. `graphql(/* GraphQL */ \`` - gives you syntax highlighting in VSCode. You need to install [GraphQL: Language Feature Support](https://marketplace.visualstudio.com/items?itemName=GraphQL.vscode-graphql) to see it.
 3. `__typename` is a very useful field. It allows you to narrow the type so you don't have conditional types. Notice that after `data?.entity?.__typename === 'Component'`, `data.entity.name` is doesn't need optional chaining.
 
-Under the hood, `useGraphQL` uses a combination of `react-query` and `graphql-request`. `react-query` handles retries, failures, and caching, among other things. It expects the query function as a `Promise`. `graphql-request` is a light helper on top of the fetch API which returns that expected `Promise`.
-
 ### Type-safe queries with TypeScript
 
-The project is configured to generate TypeScript types for GraphQL queries using `[graphql-codegen](https://the-guild.dev/graphql/codegen)`. It's configured as part of the `yarn dev` script. While running `yarn dev` or other `yarn dev:*` commands, `graphql-codegen` will watch `tsx` and `ts` files for strings tagged with `/* GraphQL */` to find operations and generate TypeScript types for these operations. The resulting TypeScript types will be generated to `packages/app/src/__generated__` directory. You can import `graphql` functon from there using relative imports.
+The project is configured to generate TypeScript types for GraphQL queries using [`graphql-codegen`](https://the-guild.dev/graphql/codegen). It's configured as part of the `graphql-codegen` script. While running the script `graphql-codegen` will watch `tsx` and `ts` files for strings tagged with `/* GraphQL */` to find operations and generate TypeScript types for these operations. The resulting TypeScript types will be generated to `packages/app/src/gql` directory. You can import `graphql` function from there using relative imports.
 
 ### GraphQL Queries and Fragments
 
@@ -56,10 +156,10 @@ Queries and Fragments are two related concepts that you should be aware of. A qu
 
 ### Graphql Queries
 
-You can declare a query by passing a string to the `graphql` function imported from `packages/app/src/__generated__`. You have to use the relative import.
+You can declare a query by passing a string to the `graphql` function imported from `packages/app/src/gql`. You have to use the relative import.
 
 ```jsx
-import { graphql } from '../../../../__generated__';
+import { graphql } from './gql';
 
 export const ComponentPageQuery = graphql(/* GraphQL */ `
   query ComponentPage($name: String!, $namespace: String) {
@@ -72,12 +172,13 @@ export const ComponentPageQuery = graphql(/* GraphQL */ `
 `);
 ```
 
-You can fetch the query with `useGraphQL(ComponentPageQuery, { name: 'my-component'})` hook.
+You can fetch the query with `useQuery({ query: ComponentPageQuery, variables: { name: 'my-component'} })` hook.
 
 ```tsx
 export function ComponentPage() {
-  const { isLoading, error, data } = useGraphQL(ComponentPageQuery, {
-    name: 'my-component',
+  const [{ fetching, error, data }] = useQuery({
+    query: ComponentPageQuery,
+    variables: { name: 'my-component' }
   });
 
   return data?.entity?.__typename === 'Component' ? data.entity.name : null;
@@ -86,41 +187,45 @@ export function ComponentPage() {
 
 ### GraphQL Fragments
 
-In the query below, we have multiple fragments, signified by the `...`. The first fragment, `... on GithubOrganization`, is defined within the backend graphql modules. It allows scoping a query to data on a specific type of entity.
+In the query below, we have one of the fragments, signified by the `...`. The first fragment, `... on Component`, is defined within the backend graphql modules. It allows scoping a query to data on a specific type of entity.
 
 ```tsx
-import { graphql } from '../../../../__generated__';
+import { graphql } from './gql';
 
 const AboutCardFragment = graphql(/* GraphQL */ `
-  fragment AboutCard on Component {
-    ref
-    name
-    description
-    system {
+  fragment AboutCardFragment on Entity {
+    ... on Component {
       ref
       name
-    }
-    domain {
-      ref
-      name
+      description
+      system {
+        ref
+        name
+      }
+      domain {
+        ref
+        name
+      }
     }
   }
 `);
 
 ```
 
-Within the component using this fragment, it requires the `useFragment()` hook and a few type parameters. We set the `<typeof Var>` to be the `const` variable of the query, in this case `GithubOrganizationRepositoriesFragment`. The same is passed to the `useFragment` function as the first arg, and the respective props as the second arg. From here, `entity` should be fully typed and usuable within the React component.
+Within the component using this fragment, it requires the `useFragment()` hook and a few type parameters. We set the `<typeof Var>` to be the `const` variable of the query, in this case `AboutCardFragment`. The same is passed to the `useFragment` function as the first arg, and the respective props as the second arg. From here, `entity` should be fully typed and usuable within the React component.
 
 ```tsx
 import {
   type FragmentType,
   useFragment,
   graphql,
-} from '../../../../__generated__';
+} from './gql';
 
-export function AboutCard(props: {
-  entity: FragmentType<typeof AboutCardFragment>;
-}) {
+type AboutCardProps = {
+  entity: FragmentType<typeof AboutCardFragment>
+}
+
+export function AboutCard(props: UserListItemProps) {
   const entity = useFragment(
     AboutCardFragment,
     props.entity,
@@ -129,3 +234,5 @@ export function AboutCard(props: {
   [...]
 }
 ```
+
+[installation]: ./installation

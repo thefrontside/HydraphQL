@@ -31,9 +31,13 @@ the data source that was used to resolve the node. You can use this field to
 
 ```graphql
 extend interface Node
-  @discriminates(with: "__source")
-  @discriminationAlias(value: "ComponentsAPI", type: "Component")
-  @discriminationAlias(value: "OwnersAPI", type: "Owner") {}
+  @discriminates(
+    with: "__source",
+    aliases: [
+      { value: "ComponentsAPI", type: "Component" },
+      { value: "OwnersAPI", type: "Owner" }
+    ]
+  ) {}
 ```
 
 ### Resolving collection of nodes
