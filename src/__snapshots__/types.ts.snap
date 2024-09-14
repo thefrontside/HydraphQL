@@ -25,6 +25,11 @@ export type Connection = {
   pageInfo: PageInfo;
 };
 
+export type DiscriminationAlias = {
+  type: Scalars['String']['input'];
+  value: Scalars['String']['input'];
+};
+
 export type Edge = {
   cursor: Scalars['String']['output'];
   node: Node;
@@ -137,6 +142,7 @@ export type ResolversInterfaceTypes<RefType extends Record<string, unknown>> = {
 export type ResolversTypes = {
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Connection: ResolverTypeWrapper<ResolversInterfaceTypes<ResolversTypes>['Connection']>;
+  DiscriminationAlias: DiscriminationAlias;
   Edge: ResolverTypeWrapper<ResolversInterfaceTypes<ResolversTypes>['Edge']>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
@@ -151,6 +157,7 @@ export type ResolversTypes = {
 export type ResolversParentTypes = {
   Boolean: Scalars['Boolean']['output'];
   Connection: ResolversInterfaceTypes<ResolversParentTypes>['Connection'];
+  DiscriminationAlias: DiscriminationAlias;
   Edge: ResolversInterfaceTypes<ResolversParentTypes>['Edge'];
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
@@ -162,6 +169,7 @@ export type ResolversParentTypes = {
 };
 
 export type DiscriminatesDirectiveArgs = {
+  aliases?: Maybe<Array<DiscriminationAlias>>;
   opaqueType?: Maybe<Scalars['String']['input']>;
   with?: Maybe<Scalars['_DirectiveArgument_']['input']>;
 };

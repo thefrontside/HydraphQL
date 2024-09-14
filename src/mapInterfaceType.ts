@@ -1,5 +1,8 @@
-import _ from "lodash";
-import { pascalCase } from "pascal-case";
+import type {
+  GraphQLFieldConfigMap,
+  GraphQLNamedType,
+  GraphQLTypeResolver,
+} from "graphql";
 import {
   GraphQLInterfaceType,
   GraphQLObjectType,
@@ -7,17 +10,15 @@ import {
   isObjectType,
   isUnionType,
 } from "graphql";
-import type {
-  GraphQLFieldConfigMap,
-  GraphQLNamedType,
-  GraphQLTypeResolver,
-} from "graphql";
+import _ from "lodash";
+import { pascalCase } from "pascal-case";
+import { decodeId } from "./helpers.js";
 import type {
   DirectiveMapperAPI,
+  DiscriminationArgs,
   NamedType,
   ResolverContext,
 } from "./types.js";
-import { decodeId } from "./helpers.js";
 
 function isRelatedType(
   resolvedType: GraphQLObjectType,
@@ -33,8 +34,9 @@ function isRelatedType(
 
 function validateDiscriminatesDirective(
   interfaceName: string,
-  directive: Record<string, unknown> | undefined,
-  aliases: { value: string; type: string }[],
+  directive: DiscriminationArgs | undefined,
+  aliases: Map<string, string>,
+  ambiguousAliases: Map<string, string[]>,
   api: DirectiveMapperAPI,
   {
     implementationsMap,
@@ -56,9 +58,9 @@ function validateDiscriminatesDirective(
     );
   }
   if (!directive) {
-    if (aliases.length > 0) {
+    if (aliases.size > 0) {
       throw new Error(
-        `The "${interfaceName}" interface has @discriminationAlias directive but doesn't have @discriminates directive`,
+        `The "${interfaceName}" interface has discrimination aliases but doesn't have @discriminates directive`,
       );
     }
     if (discriminates && discriminates.size > 1) {
@@ -74,7 +76,7 @@ function validateDiscriminatesDirective(
       );
     }
 
-    const opaqueType = directive.opaqueType as string | undefined;
+    const opaqueType = directive.opaqueType;
     const opaqueTypename =
       opaqueType ??
       (generateOpaqueTypes ? `Opaque${interfaceName}` : undefined);
@@ -130,26 +132,18 @@ function validateDiscriminatesDirective(
     }
   }
 
-  const aliasesMap = aliases.reduce(
-    (map, alias) => ({
-      ...map,
-      [alias.value]: [...(map[alias.value] ?? []), alias.type],
-    }),
-    {} as Record<string, string[]>,
-  );
-  const ambiguousAliases = Object.entries(aliasesMap).filter(
-    ([, types]) => types.length > 1,
-  );
-  if (ambiguousAliases.length) {
+  if (ambiguousAliases.size) {
     throw new Error(
-      `The following discrimination aliases are ambiguous: ${ambiguousAliases
+      `The following discrimination aliases are ambiguous: ${[
+        ...ambiguousAliases.entries(),
+      ]
         .map(([alias, types]) => `"${alias}" => "${types.join('" | "')}"`)
         .join(", ")}`,
     );
   }
 
-  const types = Object.values(aliasesMap).map(
-    ([type]) => [type, api.typeMap[type]] as const,
+  const types = [...aliases.values()].map(
+    (type) => [type, api.typeMap[type]] as const,
   );
   const invalidTypes = types
     .filter(([, type]) => type && !isObjectType(type) && !isInterfaceType(type))
@@ -162,7 +156,7 @@ function validateDiscriminatesDirective(
     throw new Error(
       `Type(-s) "${invalidTypes.join(
         '", "',
-      )}" in \`interface ${interfaceName} @discriminationAlias(value: ..., type: ...)\` are not object types or interfaces`,
+      )}" in \`interface ${interfaceName} @discriminates(aliases: [...])\` are not object types or interfaces`,
     );
   }
   if (typesWithWrongInterfaces.length) {
@@ -171,15 +165,15 @@ function validateDiscriminatesDirective(
         .map(([name]) => name)
         .join(
           '", "',
-        )}" in \`interface ${interfaceName} @discriminationAlias(value: ..., type: ...)\` must implement "${interfaceName}" interface by using @implements directive`,
+        )}" in \`interface ${interfaceName} @discriminates(aliases: [...])\` must implement "${interfaceName}" interface by using @implements directive`,
     );
   }
 }
 
 function defineResolver(
   interfaceName: string,
-  directive: Record<string, unknown> | undefined,
-  aliases: { value: string; type: string }[],
+  directive: DiscriminationArgs | undefined,
+  aliases: Map<string, string>,
   {
     implementationsMap,
     generateOpaqueTypes,
@@ -194,7 +188,7 @@ function defineResolver(
     ? `Opaque${interfaceName}`
     : undefined;
   const opaqueTypeName = directive
-    ? (directive.opaqueType as string | undefined) ?? generatedOpaqueType
+    ? directive.opaqueType ?? generatedOpaqueType
     : implementationType;
 
   return async (source, context, info) => {
@@ -222,8 +216,7 @@ function defineResolver(
             )}\` value which was discriminated by ${interfaceName} interface must be a string`,
           );
         }
-        const typename =
-          aliases.find((alias) => alias.value === value)?.type ?? value;
+        const typename = aliases.get(value) ?? value;
         const type =
           schema.getType(typename) ?? schema.getType(pascalCase(typename));
 
@@ -309,7 +302,7 @@ export function mapInterfaceType(
   const [discriminatesDirective] = (api.getDirective(
     interfaceType,
     "discriminates",
-  ) ?? []) as (Record<string, unknown> | undefined)[];
+  ) ?? []) as (DiscriminationArgs | undefined)[];
   const discriminationAliases = (api.getDirective(
     interfaceType,
     "discriminationAlias",
@@ -323,17 +316,42 @@ export function mapInterfaceType(
       `The "resolveType" function has already been implemented for "${interfaceName}" interface which may lead to undefined behavior`,
     );
   }
+
+  if (discriminationAliases.length > 0) {
+    console.log(
+      '`@discriminationAlias` directive is deprecated, please use `@directive(with: "...", aliases: [{ value: "...", type: "..." }])`',
+    );
+  }
+
+  const ambiguousAliases = new Map<string, string[]>();
+  const aliases = new Map<string, string>();
+  const rawAliases = [
+    ...discriminationAliases,
+    ...(discriminatesDirective?.aliases ?? []),
+  ];
+  for (const alias of rawAliases) {
+    const existingAliasType = aliases.get(alias.value);
+    if (existingAliasType) {
+      ambiguousAliases.set(alias.value, [
+        ...(ambiguousAliases.get(alias.value) ?? [existingAliasType]),
+        alias.type,
+      ]);
+    }
+    aliases.set(alias.value, alias.type);
+  }
+
   validateDiscriminatesDirective(
     interfaceName,
     discriminatesDirective,
-    discriminationAliases,
+    aliases,
+    ambiguousAliases,
     api,
     options,
   );
   const resolver = defineResolver(
     interfaceName,
     discriminatesDirective,
-    discriminationAliases,
+    aliases,
     options,
   );
 
@@ -369,8 +387,7 @@ export function mapInterfaceType(
     extensionASTNodes,
   });
 
-  discriminationAliases
-    .map((alias) => alias.type)
+  [...aliases.values()]
     .filter((typename) => !(typename in api.typeMap))
     .forEach((typename) => {
       api.typeMap[typename] = new GraphQLObjectType({
@@ -384,7 +401,7 @@ export function mapInterfaceType(
     });
 
   const opaqueTypeName =
-    (discriminatesDirective?.opaqueType as string | undefined) ??
+    discriminatesDirective?.opaqueType ??
     (options.generateOpaqueTypes ? `Opaque${interfaceName}` : undefined);
   const { discriminates } = options.implementationsMap.get(interfaceName) ?? {};
   if (

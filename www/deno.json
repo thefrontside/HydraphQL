@@ -1,0 +1,23 @@
+{
+  "tasks": {
+    "dev": "deno run -A lib/watch.ts components docs lib middleware routes -- deno run -A --lock-write main.tsx"
+  },
+  "lint": {
+    "exclude": ["docs/esm"],
+    "rules": {
+      "exclude": ["prefer-const", "require-yield"]
+    }
+  },
+  "fmt": {
+    "exclude": ["docs/esm"]
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "revolution"
+  },
+  "imports": {
+    "effection": "https://deno.land/x/effection@3.0.0-beta.2/mod.ts",
+    "revolution": "https://deno.land/x/revolution@0.2.3/mod.ts",
+    "revolution/jsx-runtime": "https://deno.land/x/revolution@0.2.3/jsx-runtime.ts"
+  }
+}

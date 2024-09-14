@@ -1,5 +1,6 @@
-directive @discriminates(opaqueType: String, with: _DirectiveArgument_) on INTERFACE
+directive @discriminates(aliases: [DiscriminationAlias!], opaqueType: String, with: _DirectiveArgument_) on INTERFACE
 
+"""@deprecated Please use `@discriminates(aliases: [...])`"""
 directive @discriminationAlias(type: String!, value: String!) repeatable on INTERFACE
 
 directive @field(at: _DirectiveArgument_, default: _DirectiveArgument_) on FIELD_DEFINITION
@@ -12,6 +13,11 @@ interface Connection {
   count: Int
   edges: [Edge!]!
   pageInfo: PageInfo!
+}
+
+input DiscriminationAlias {
+  type: String!
+  value: String!
 }
 
 interface Edge {

@@ -1,0 +1,21 @@
+{
+  "Getting Started": [
+    ["installation.mdx", "Installation"],
+    ["extending.mdx", "Extending schema"],
+    ["querying.mdx", "Querying GraphQL API"],
+    ["why.mdx", "Why GraphQL?"],
+    ["faq.mdx", "FAQ"]
+  ],
+  "Directives": [
+    ["field.mdx", "@field"],
+    ["implements.mdx", "@implements"],
+    ["discriminates.mdx", "@discriminates"],
+    ["resolve.mdx", "@resolve"],
+    ["relation.mdx", "@relation"]
+  ],
+  "Advanced": [
+    ["resolving.mdx", "Type/Field resolving"],
+    ["hydraphql.mdx", "HydraphQL"],
+    ["server.mdx", "GraphQL Server"]
+  ]
+}

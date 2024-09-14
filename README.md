@@ -8,7 +8,6 @@ types and how to resolve them.
   - [`@field`](#field)
   - [`@implements`](#implements)
   - [`@discriminates`](#discriminates)
-  - [`@discriminationAlias`](#discriminationalias)
   - [`@resolve`](#resolve)
 - [Getting started](#getting-started)
   - [GraphQL Application](#graphql-application)
@@ -122,6 +121,8 @@ type Service @implements(interface: "Entity") {
 _NOTE: In this example if we have data of `Entity` type and it has `kind` field_
 _with `Component` value, that means data will be resolved to `Component` type_
 
+#### `opaqueType`
+
 There is a special case when your runtime data doesn't have a value
 that can be used to discriminate the interface or there is no type
 that matches the value. In this case, you can define `opaqueType` argument
@@ -141,26 +142,25 @@ plugin will generate it for you.
 There is another way to define opaque types for all interfaces by using `generateOpaqueTypes`
 option for GraphQL plugin.
 
-### `@discriminationAlias`
+#### `aliases`
 
-By default value from `with` argument is used to find a type as-is or converted to PascalCase. 
-Sometimes you need to match the value with a type that has a different name. 
-In this case, you can use `@discriminationAlias` directive.
+By default value from `with` argument is used to find a type as-is or converted to PascalCase.
+Sometimes you need to match the value with a type that has a different name.
+In this case, you can define `aliases` argument.
 
 ```graphql
 interface API
   @implements(interface: "Node")
-  @discriminates(with: "spec.type")
-  @discriminationAlias(value: "openapi", type: "OpenAPI") {
+  @discriminates(with: "spec.type", aliases: [{ value: "grpc", type: "GrpcAPI" }]) {
     # ...
   }
 
-type OpenAPI @implements(interface: "API") {
+type GrpcAPI @implements(interface: "API") {
   # ...
 }
 ```
 
-This means, when `spec.type` equals to `openapi`, the `API` interface will be resolved to `OpenAPI` type.
+This means, when `spec.type` equals to `grpc`, the `API` interface will be resolved to `GrpcAPI` type.
 
 ### `@resolve`
 

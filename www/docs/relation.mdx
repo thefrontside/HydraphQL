@@ -1,0 +1,55 @@
+`@relation` directive is a special case of [`@resolve`](./resolve)
+provided by [Backstage Catalog GraphQL plugin][catalog-module]. The
+structure of [`Entities`](https://backstage.io/docs/features/software-catalog/references)
+doesn't allow to use `@resolve` directive. Catalog model of Backstage
+is a graph of entities, where each entity can have relationships with
+other entities. Those relationships are defined as a list of references
+in [`relations`][relations] field of an entity. If you want to start using
+Backstage Catalog GraphQL plugin, check out [Backstage](./backstage) section.
+In compare to `@resolve` directive you don't need to create a data loader,
+Backstage Catalog GraphQL plugin already has it.
+
+## Usage
+
+Each relationship in entity's `relations` list has a `type` of relationship
+and a `targetRef` to another entity. `@relation` directive allows you to
+specify a `name` of the relationship type
+
+```graphql
+type Component {
+  owner: User @relation(name: "ownedBy")
+}
+```
+
+If there are more than one relationship with `ownedBy` type, the first
+entity in the list will be returned. If you plan to get multiple entities
+you can use array type or `Connection` type. With `Connection` type you have to
+specify `nodeType` argument to specify to which type nodes should be resolved.
+More about `Connection` type you can read in [Collections](./collections) section.
+
+```graphql
+type Repository {
+  contributors: Connection @relation(name: "contributedBy", nodeType: "User")
+
+  # Or you can just use an array of entities
+  contributors: [User] @relation(name: "contributedBy")
+}
+```
+
+If you have different kinds of entities with the same relationship type you
+can filter them by `kind` argument:
+
+```graphql
+type System {
+  components: Connection
+    @relation(name: "hasPart", nodeType: "Component", kind: "component")
+  resources: Connection
+    @relation(name: "hasPart", nodeType: "Resource", kind: "resource")
+}
+```
+
+> Note: For now `Catalog` loader doesn't support query arguments for filtering,
+but in the future it will.
+
+[catalog-module]: https://github.com/thefrontside/playhouse/blob/main/plugins/graphql-backend-module-catalog
+[relations]: https://backstage.io/docs/features/software-catalog/descriptor-format#common-to-all-kinds-relations
